@@ -1,0 +1,10 @@
+{
+  "name": "Remix Review Analysis",
+  "description": "Understand What Customers Really Think. Premium AI-powered e-commerce review intelligence analyzing sentiment, cross-platform metrics, and aspect breakdowns across 1000+ products.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
