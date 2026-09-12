@@ -7,20 +7,21 @@ import {
   Star,
   ShieldCheck,
   CheckCircle2,
-  Check,
-  X as XIcon,
   Sparkles,
   Calendar,
+  ShoppingBag,
 } from 'lucide-react';
 
 interface ReviewDrawerProps {
   review: StoredReview | null;
   onClose: () => void;
+  onBuyProduct?: (productTitle: string, productId?: string) => void;
 }
 
 export const ReviewDrawer: React.FC<ReviewDrawerProps> = ({
   review,
   onClose,
+  onBuyProduct,
 }) => {
   if (!review) return null;
 
@@ -158,47 +159,26 @@ export const ReviewDrawer: React.FC<ReviewDrawerProps> = ({
           </div>
         </div>
 
-        {/* Pros & Cons */}
-        {(review.pros.length > 0 || review.cons.length > 0) && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100 text-xs">
-            {review.pros.length > 0 && (
-              <div className="p-3 bg-emerald-50/50 rounded-xl border border-emerald-100">
-                <div className="font-bold text-emerald-900 flex items-center gap-1.5 mb-2">
-                  <Check className="w-4 h-4 text-emerald-600" />
-                  Key Pros
-                </div>
-                <ul className="space-y-1 text-slate-700">
-                  {review.pros.map((p, i) => (
-                    <li key={i} className="leading-snug">• {p}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {review.cons.length > 0 && (
-              <div className="p-3 bg-rose-50/50 rounded-xl border border-rose-100">
-                <div className="font-bold text-rose-900 flex items-center gap-1.5 mb-2">
-                  <XIcon className="w-4 h-4 text-rose-600" />
-                  Cons & Caveats
-                </div>
-                <ul className="space-y-1 text-slate-700">
-                  {review.cons.map((c, i) => (
-                    <li key={i} className="leading-snug">• {c}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Footer actions */}
-        <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-3">
+        <div className="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-5 py-2.5 rounded-xl text-xs font-bold bg-slate-950 text-white hover:bg-slate-800 transition-colors cursor-pointer"
+            className="px-5 py-2.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
           >
             Close Details
           </button>
+          {onBuyProduct && (
+            <button
+              onClick={() => {
+                onClose();
+                onBuyProduct(review.productTitle, review.productId);
+              }}
+              className="px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              <span>Buy This Product</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

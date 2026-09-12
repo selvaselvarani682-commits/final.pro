@@ -1,0 +1,35 @@
+{
+  "entities": {
+    "Review": {
+      "title": "Review",
+      "description": "E-commerce customer review with sentiment and aspect analytics",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "productId": { "type": "string" },
+        "productTitle": { "type": "string" },
+        "reviewerName": { "type": "string" },
+        "platform": { "type": "string", "enum": ["Amazon", "Meesho", "Myntra", "Nykaa", "Snapdeal"] },
+        "rating": { "type": "number" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "sentiment": { "type": "string", "enum": ["Positive", "Negative", "Neutral", "Mixed"] },
+        "confidenceScore": { "type": "number" },
+        "trustScore": { "type": "number" },
+        "pros": { "type": "array", "items": { "type": "string" } },
+        "cons": { "type": "array", "items": { "type": "string" } },
+        "aspects": { "type": "array" },
+        "summary": { "type": "string" },
+        "verified": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "productId", "productTitle", "reviewerName", "platform", "rating", "title", "content", "sentiment", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/reviews/{reviewId}": {
+      "schema": "Review",
+      "description": "Collection of e-commerce customer reviews and aspect-based sentiment evaluations"
+    }
+  }
+}

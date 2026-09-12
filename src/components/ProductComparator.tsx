@@ -2,18 +2,20 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Product, PlatformType } from '../types';
 import { ALL_PRODUCTS } from '../data/products';
 import { PlatformPill } from './PlatformPill';
-import { Star, Check, X, Scale } from 'lucide-react';
+import { Star, Scale, ShoppingBag } from 'lucide-react';
 
 interface ProductComparatorProps {
   products?: Product[];
   selectedProductAId?: string;
   selectedProductBId?: string;
+  onBuyProduct?: (product: Product, platform?: PlatformType) => void;
 }
 
 export const ProductComparator: React.FC<ProductComparatorProps> = ({
   products = ALL_PRODUCTS,
   selectedProductAId,
   selectedProductBId,
+  onBuyProduct,
 }) => {
   const [prodAId, setProdAId] = useState<string>(selectedProductAId || products[0]?.id || 'prod-001');
   const [prodBId, setProdBId] = useState<string>(selectedProductBId || products[1]?.id || 'prod-002');
@@ -203,31 +205,19 @@ export const ProductComparator: React.FC<ProductComparatorProps> = ({
                 </div>
               </div>
 
-              {/* Pros & Cons */}
-              <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100 text-xs">
-                <div>
-                  <div className="font-bold text-emerald-800 flex items-center gap-1 mb-1">
-                    <Check className="w-3.5 h-3.5" />
-                    Key Pros
-                  </div>
-                  <ul className="space-y-1 text-slate-600 text-[11px]">
-                    {prodA.aiSummary.pros.slice(0, 2).map((p, i) => (
-                      <li key={i} className="leading-snug">• {p}</li>
-                    ))}
-                  </ul>
+              {/* Buy Product A Action */}
+              {onBuyProduct && (
+                <div className="pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => onBuyProduct(prodA)}
+                    className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
+                  >
+                    <ShoppingBag className="w-4 h-4" />
+                    <span>Buy {prodA.brand} (Best Deal: ₹{prodA.price.toLocaleString('en-IN')})</span>
+                  </button>
                 </div>
-                <div>
-                  <div className="font-bold text-rose-800 flex items-center gap-1 mb-1">
-                    <X className="w-3.5 h-3.5" />
-                    Key Cons
-                  </div>
-                  <ul className="space-y-1 text-slate-600 text-[11px]">
-                    {prodA.aiSummary.cons.slice(0, 2).map((c, i) => (
-                      <li key={i} className="leading-snug">• {c}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
+              )}
             </div>
           )}
 
@@ -312,31 +302,19 @@ export const ProductComparator: React.FC<ProductComparatorProps> = ({
                 </div>
               </div>
 
-              {/* Pros & Cons */}
-              <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100 text-xs">
-                <div>
-                  <div className="font-bold text-emerald-800 flex items-center gap-1 mb-1">
-                    <Check className="w-3.5 h-3.5" />
-                    Key Pros
-                  </div>
-                  <ul className="space-y-1 text-slate-600 text-[11px]">
-                    {prodB.aiSummary.pros.slice(0, 2).map((p, i) => (
-                      <li key={i} className="leading-snug">• {p}</li>
-                    ))}
-                  </ul>
+              {/* Buy Product B Action */}
+              {onBuyProduct && (
+                <div className="pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => onBuyProduct(prodB)}
+                    className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
+                  >
+                    <ShoppingBag className="w-4 h-4" />
+                    <span>Buy {prodB.brand} (Best Deal: ₹{prodB.price.toLocaleString('en-IN')})</span>
+                  </button>
                 </div>
-                <div>
-                  <div className="font-bold text-rose-800 flex items-center gap-1 mb-1">
-                    <X className="w-3.5 h-3.5" />
-                    Key Cons
-                  </div>
-                  <ul className="space-y-1 text-slate-600 text-[11px]">
-                    {prodB.aiSummary.cons.slice(0, 2).map((c, i) => (
-                      <li key={i} className="leading-snug">• {c}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
+              )}
             </div>
           )}
         </div>

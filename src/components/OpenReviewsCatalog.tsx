@@ -11,6 +11,9 @@ import {
   SlidersHorizontal,
   PlusCircle,
   Inbox,
+  ChevronDown,
+  ChevronUp,
+  Camera,
 } from 'lucide-react';
 
 interface OpenReviewsCatalogProps {
@@ -43,6 +46,21 @@ export const OpenReviewsCatalog: React.FC<OpenReviewsCatalogProps> = ({
   onSearchChange,
 }) => {
   const [sortBy, setSortBy] = useState<'newest' | 'rating' | 'trust'>('newest');
+  const [expandedReviewIds, setExpandedReviewIds] = useState<Set<string>>(new Set());
+  const [displayLimit, setDisplayLimit] = useState<number>(6);
+
+  const toggleExpandReview = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpandedReviewIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
   const categories = [
     { label: 'All Reviews', value: 'All Categories' },
@@ -205,111 +223,181 @@ export const OpenReviewsCatalog: React.FC<OpenReviewsCatalogProps> = ({
         {/* Review Cards Grid */}
         {filteredReviews.length > 0 ? (
           <div className="space-y-3">
-            {filteredReviews.map((rev) => (
-              <div
-                key={rev.id}
-                onClick={() => onSelectReview(rev)}
-                className="group relative bg-white rounded-2xl border border-slate-200 p-5 hover:border-slate-400 hover:shadow-md transition-all cursor-pointer"
-              >
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  {/* Left Column: Product & Tags */}
-                  <div className="space-y-2 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <PlatformPill platform={rev.platform} size="sm" />
-                      <span className="text-xs font-bold text-slate-900">
-                        {rev.productTitle}
-                      </span>
-                      {rev.verified && (
-                        <span className="inline-flex items-center gap-1 text-[10px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded font-mono font-semibold border border-emerald-200">
-                          <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
-                          Verified Buyer
+            {filteredReviews.slice(0, displayLimit).map((rev) => {
+              const isExpanded = expandedReviewIds.has(rev.id);
+              return (
+                <div
+                  key={rev.id}
+                  onClick={() => onSelectReview(rev)}
+                  className="group relative bg-white rounded-2xl border border-slate-200 p-5 hover:border-slate-400 hover:shadow-md transition-all cursor-pointer"
+                >
+                  <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+                    {/* Left Column: Product & Tags */}
+                    <div className="space-y-2 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <PlatformPill platform={rev.platform} size="sm" />
+                        <span className="text-xs font-bold text-slate-900">
+                          {rev.productTitle}
                         </span>
+                        {rev.verified && (
+                          <span className="inline-flex items-center gap-1 text-[10px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded font-mono font-semibold border border-emerald-200">
+                            <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
+                            Verified Buyer
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Review Title & Snippet with Show Less / Show More */}
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-950 group-hover:text-indigo-900 transition-colors">
+                          "{rev.title}"
+                        </h3>
+                        <p className={`text-xs text-slate-600 mt-1 leading-relaxed ${isExpanded ? '' : 'line-clamp-2'}`}>
+                          {rev.content}
+                        </p>
+                        {rev.content.length > 90 && (
+                          <button
+                            type="button"
+                            onClick={(e) => toggleExpandReview(rev.id, e)}
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 mt-1 cursor-pointer bg-indigo-50/70 hover:bg-indigo-100/70 px-2 py-0.5 rounded transition-colors"
+                          >
+                            {isExpanded ? (
+                              <>
+                                <span>Show less</span>
+                                <ChevronUp className="w-3 h-3" />
+                              </>
+                            ) : (
+                              <>
+                                <span>Show more</span>
+                                <ChevronDown className="w-3 h-3" />
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Customer Review Photos if available */}
+                      {rev.photos && rev.photos.length > 0 && (
+                        <div className="flex items-center gap-2 pt-1">
+                          <span className="text-[10px] text-slate-500 font-medium flex items-center gap-1">
+                            <Camera className="w-3 h-3 text-indigo-500" />
+                            <span>Photos ({rev.photos.length}):</span>
+                          </span>
+                          <div className="flex items-center gap-1.5 overflow-x-auto py-0.5">
+                            {rev.photos.map((photo, pIdx) => (
+                              <img
+                                key={pIdx}
+                                src={photo}
+                                alt="Customer review photo"
+                                className="w-10 h-10 rounded-lg object-cover border border-slate-200 hover:scale-105 transition-transform"
+                              />
+                            ))}
+                          </div>
+                        </div>
                       )}
-                    </div>
 
-                    {/* Review Title & Snippet */}
-                    <div>
-                      <h3 className="text-sm font-bold text-slate-950 group-hover:text-indigo-900 transition-colors">
-                        "{rev.title}"
-                      </h3>
-                      <p className="text-xs text-slate-600 line-clamp-2 mt-1 leading-relaxed">
-                        {rev.content}
-                      </p>
-                    </div>
-
-                    {/* Aspect Pills (ABSA) */}
-                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                      {rev.aspects.slice(0, 3).map((asp, i) => (
-                        <span
-                          key={i}
-                          className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200"
-                        >
-                          <span className="font-semibold">{asp.aspect}:</span>
-                          <span className="font-bold text-indigo-700">{asp.score}%</span>
-                        </span>
-                      ))}
-                      {rev.aspects.length > 3 && (
-                        <span className="text-[10px] text-slate-400 font-mono">
-                          +{rev.aspects.length - 3} more facets
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Right Column: Trust, Rating & Inspect Action */}
-                  <div className="flex items-center lg:flex-col lg:items-end justify-between lg:justify-center gap-3 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100 shrink-0">
-                    <div className="flex items-center gap-2">
-                      {/* Star Rating */}
-                      <div className="flex items-center gap-0.5 text-amber-500">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
+                      {/* Aspect Pills (ABSA) */}
+                      <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                        {rev.aspects.slice(0, 3).map((asp, i) => (
+                          <span
                             key={i}
-                            className={`w-3.5 h-3.5 ${
-                              i < rev.rating
-                                ? 'fill-amber-400 text-amber-400'
-                                : 'text-slate-200'
-                            }`}
-                          />
+                            className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200"
+                          >
+                            <span className="font-semibold">{asp.aspect}:</span>
+                            <span className="font-bold text-indigo-700">{asp.score}%</span>
+                          </span>
                         ))}
-                      </div>
-
-                      <SentimentBadge sentiment={rev.sentiment} size="sm" />
-
-                      {/* Trust Score */}
-                      <div className="flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded text-xs font-mono font-bold">
-                        <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                        <span>{rev.trustScore}%</span>
+                        {rev.aspects.length > 3 && (
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            +{rev.aspects.length - 3} more facets
+                          </span>
+                        )}
                       </div>
                     </div>
 
-                    {/* Author & Timestamp + Button */}
-                    <div className="flex items-center gap-3">
-                      <div className="text-[11px] text-slate-400 font-mono text-right hidden sm:block">
-                        <span>By {rev.reviewerName}</span>
+                    {/* Right Column: Trust, Rating & Inspect Action */}
+                    <div className="flex items-center lg:flex-col lg:items-end justify-between lg:justify-center gap-3 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100 shrink-0">
+                      <div className="flex items-center gap-2">
+                        {/* Star Rating */}
+                        <div className="flex items-center gap-0.5 text-amber-500">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-3.5 h-3.5 ${
+                                i < rev.rating
+                                  ? 'fill-amber-400 text-amber-400'
+                                  : 'text-slate-200'
+                              }`}
+                            />
+                          ))}
+                        </div>
+
+                        <SentimentBadge sentiment={rev.sentiment} size="sm" />
+
+                        {/* Trust Score */}
+                        <div className="flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded text-xs font-mono font-bold">
+                          <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                          <span>{rev.trustScore}%</span>
+                        </div>
                       </div>
 
-                      {/* Delete action */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDeleteReview(rev.id, rev.productTitle);
-                        }}
-                        className="p-1.5 text-slate-300 hover:text-rose-600 transition-colors rounded-lg hover:bg-rose-50 cursor-pointer"
-                        title="Delete Review"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      {/* Author & Timestamp + Button */}
+                      <div className="flex items-center gap-3">
+                        <div className="text-[11px] text-slate-400 font-mono text-right hidden sm:block">
+                          <span>By {rev.reviewerName}</span>
+                        </div>
 
-                      {/* Inspect CTA Button */}
-                      <div className="inline-flex items-center gap-1 text-xs font-bold text-slate-900 group-hover:text-[#ED7B2F] transition-colors">
-                        <span>Inspect Review</span>
-                        <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
+                        {/* Delete action */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteReview(rev.id, rev.productTitle);
+                          }}
+                          className="p-1.5 text-slate-300 hover:text-rose-600 transition-colors rounded-lg hover:bg-rose-50 cursor-pointer"
+                          title="Delete Review"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+
+                        {/* Inspect CTA Button */}
+                        <div className="inline-flex items-center gap-1 text-xs font-bold text-slate-900 group-hover:text-[#ED7B2F] transition-colors">
+                          <span>Inspect Review</span>
+                          <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
+              );
+            })}
+
+            {/* List Pagination / Show More & Show Less Toggle */}
+            {filteredReviews.length > 6 && (
+              <div className="pt-4 flex items-center justify-center gap-3">
+                {displayLimit < filteredReviews.length ? (
+                  <button
+                    type="button"
+                    onClick={() => setDisplayLimit(filteredReviews.length)}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-white text-slate-800 border border-slate-300 hover:border-slate-400 hover:bg-slate-50 transition-all shadow-2xs cursor-pointer"
+                  >
+                    <span>Show More Reviews ({filteredReviews.length - displayLimit} remaining)</span>
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDisplayLimit(6);
+                      document.getElementById('open-reviews-section')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-white text-slate-800 border border-slate-300 hover:border-slate-400 hover:bg-slate-50 transition-all shadow-2xs cursor-pointer"
+                  >
+                    <span>Show Less Reviews</span>
+                    <ChevronUp className="w-3.5 h-3.5 text-indigo-600" />
+                  </button>
+                )}
               </div>
-            ))}
+            )}
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-slate-200 py-16 text-center space-y-3">

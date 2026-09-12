@@ -48,6 +48,8 @@ import {
   Wand2,
   Activity,
   Eye,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 
 interface MultimodalReviewSearchProps {
@@ -61,10 +63,12 @@ export const MultimodalReviewSearch: React.FC<MultimodalReviewSearchProps> = ({
   onSelectReview,
   onSelectProductForCompare,
 }) => {
-  const [modality, setModality] = useState<SearchModality>('text');
-
   // Text Query State
   const [textQuery, setTextQuery] = useState<string>('');
+
+  // Expandable UI Panels State
+  const [showImageSearch, setShowImageSearch] = useState<boolean>(false);
+  const [showAudioHelper, setShowAudioHelper] = useState<boolean>(false);
 
   // Image Query State
   const [imageState, setImageState] = useState<ImageSearchState>({
@@ -99,6 +103,25 @@ export const MultimodalReviewSearch: React.FC<MultimodalReviewSearchProps> = ({
     aspect: 'All',
     sortBy: 'relevance',
   });
+
+  // Active Search Modality State (controlled by the 3 buttons: Keyword, Vision, Audio)
+  const [modality, setModality] = useState<SearchModality>('text');
+
+  // Show less / expand controls for search results
+  const [expandedResultIds, setExpandedResultIds] = useState<Set<string>>(new Set());
+  const [resultsDisplayLimit, setResultsDisplayLimit] = useState<number>(6);
+
+  const toggleExpandResult = (id: string) => {
+    setExpandedResultIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
   // Check Web Speech API Support on Mount
   useEffect(() => {
@@ -238,11 +261,13 @@ export const MultimodalReviewSearch: React.FC<MultimodalReviewSearchProps> = ({
         }
 
         if (final) {
+          const spokenText = final.trim();
           setVoiceState((prev) => ({
             ...prev,
-            transcript: final,
+            transcript: spokenText,
             interimTranscript: '',
           }));
+          setTextQuery(spokenText);
         } else {
           setVoiceState((prev) => ({
             ...prev,
@@ -253,12 +278,14 @@ export const MultimodalReviewSearch: React.FC<MultimodalReviewSearchProps> = ({
 
       recognition.onerror = (event: any) => {
         console.warn('Speech recognition notice:', event.error);
+        const errMsg =
+          event.error === 'not-allowed'
+            ? 'Microphone permission was blocked. Click the lock/settings icon in your browser address bar to allow microphone access, or test with sample voice queries.'
+            : `Voice notice: ${event.error}. You can also use sample voice query presets.`;
         setVoiceState((prev) => ({
           ...prev,
           isListening: false,
-          error: event.error === 'not-allowed'
-            ? 'Microphone permission was denied. Try enabling microphone access or test with a voice command preset below.'
-            : `Voice capture: ${event.error}. You can also use preset voice commands below.`,
+          error: errMsg,
         }));
         if (audioAnimationRef.current) cancelAnimationFrame(audioAnimationRef.current);
       };
@@ -314,6 +341,7 @@ export const MultimodalReviewSearch: React.FC<MultimodalReviewSearchProps> = ({
       error: null,
       isListening: false,
     }));
+    setTextQuery(preset.command);
 
     // Auto apply filter suggestions if specified
     if (preset.autoFilters) {
@@ -356,21 +384,22 @@ export const MultimodalReviewSearch: React.FC<MultimodalReviewSearchProps> = ({
   };
 
   const activeQueryLabel = useMemo(() => {
-    if (modality === 'text') return textQuery ? `Text: "${textQuery}"` : null;
-    if (modality === 'voice') return voiceState.transcript ? `Voice: "${voiceState.transcript}"` : null;
-    if (modality === 'image') {
-      if (imageState.detectedCategory) {
-        return `Image: ${imageState.detectedCategory} (${imageState.fileName || 'Uploaded'})`;
-      }
-      return null;
+    if (modality === 'image' && imageState.detectedCategory) {
+      return `Vision Query: ${imageState.detectedCategory} (${imageState.fileName || 'Uploaded'})`;
+    }
+    if (modality === 'voice' && voiceState.transcript) {
+      return `Voice Intelligence: "${voiceState.transcript}"`;
+    }
+    if (modality === 'text' && textQuery) {
+      return `Keyword Query: "${textQuery}"`;
     }
     return null;
   }, [modality, textQuery, voiceState.transcript, imageState]);
 
   const handleResetActiveQuery = () => {
-    if (modality === 'text') setTextQuery('');
-    if (modality === 'voice') handleClearVoice();
-    if (modality === 'image') handleClearImage();
+    setTextQuery('');
+    handleClearVoice();
+    handleClearImage();
   };
 
   return (
@@ -382,102 +411,120 @@ export const MultimodalReviewSearch: React.FC<MultimodalReviewSearchProps> = ({
       <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
         {/* Module Header */}
         <div className="flex flex-col gap-5 mb-8 pb-6 border-b border-slate-200">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-              Multimodal Review Search
-            </h2>
-            <p className="text-sm text-slate-600 mt-1 max-w-2xl">
-              Query customer sentiment, aspect sentiment (ABSA), and verified experiences via text keywords, uploaded product photos, or spoken voice commands.
-            </p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+                Multimodal Review Search
+              </h2>
+              <p className="text-sm text-slate-600 mt-1 max-w-2xl">
+                Query customer sentiment, aspect sentiment (ABSA), and verified experiences via text keywords, uploaded product photos, or spoken voice commands.
+              </p>
+            </div>
+
+            {/* Audio Enablement Helper Button */}
+            <button
+              type="button"
+              onClick={() => setShowAudioHelper((prev) => !prev)}
+              className="self-start sm:self-center text-xs text-slate-700 hover:text-indigo-600 font-medium flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:border-indigo-300 shadow-2xs transition-all cursor-pointer shrink-0"
+            >
+              <HelpCircle className="w-4 h-4 text-indigo-600" />
+              <span>{showAudioHelper ? 'Hide Audio Guide' : 'How to Enable Audio?'}</span>
+            </button>
           </div>
 
-          {/* Modality Selector Tabs (Positioned on the Left) */}
+          {/* THE 3 MODALITY BUTTONS: Text Query, Image & Visual, Voice Intelligence */}
           <div className="flex items-center p-1.5 bg-slate-100/90 rounded-2xl border border-slate-200/90 shadow-xs self-start gap-1.5 flex-wrap">
+            {/* Button 1: Text Query */}
             <button
               id="search-mode-text"
               type="button"
               onClick={() => setModality('text')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 modality === 'text'
                   ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 ring-1 ring-indigo-500'
                   : 'text-slate-600 hover:text-indigo-700 hover:bg-indigo-50/70'
               }`}
             >
-              <FileText className="w-3.5 h-3.5" />
+              <FileText className="w-4 h-4" />
               <span>Text Query</span>
-              <span
-                className={`text-[9px] font-bold px-1.5 py-0.5 rounded tracking-wider uppercase ${
-                  modality === 'text'
-                    ? 'bg-indigo-700/80 text-indigo-100'
-                    : 'bg-white text-slate-500 border border-slate-200'
-                }`}
-              >
-                Keyword
-              </span>
             </button>
+
+            {/* Button 2: Image & Visual */}
             <button
               id="search-mode-image"
               type="button"
               onClick={() => setModality('image')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 modality === 'image'
                   ? 'bg-violet-600 text-white shadow-md shadow-violet-600/30 ring-1 ring-violet-500'
                   : 'text-slate-600 hover:text-violet-700 hover:bg-violet-50/70'
               }`}
             >
-              <Scan className="w-3.5 h-3.5" />
+              <Scan className="w-4 h-4" />
               <span>Image & Visual</span>
-              <span
-                className={`text-[9px] font-bold px-1.5 py-0.5 rounded tracking-wider uppercase ${
-                  modality === 'image'
-                    ? 'bg-violet-700/80 text-violet-100'
-                    : 'bg-white text-slate-500 border border-slate-200'
-                }`}
-              >
-                Vision 2.0
-              </span>
             </button>
+
+            {/* Button 3: Voice Intelligence */}
             <button
               id="search-mode-voice"
               type="button"
               onClick={() => setModality('voice')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 modality === 'voice'
                   ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30 ring-1 ring-rose-500'
                   : 'text-slate-600 hover:text-rose-700 hover:bg-rose-50/70'
               }`}
             >
-              <Radio className="w-3.5 h-3.5" />
+              <Radio className="w-4 h-4" />
               <span>Voice Intelligence</span>
-              <span
-                className={`text-[9px] font-bold px-1.5 py-0.5 rounded tracking-wider uppercase ${
-                  modality === 'voice'
-                    ? 'bg-rose-700/80 text-rose-100'
-                    : 'bg-white text-slate-500 border border-slate-200'
-                }`}
-              >
-                Audio
-              </span>
             </button>
           </div>
         </div>
 
-        {/* Dynamic Modality Area with Unique Themed Box Containers */}
+        {/* Dynamic Modality Area with Themed Box Containers */}
         <div
           className={`rounded-2xl p-5 sm:p-6 mb-6 shadow-sm transition-all border-2 ${
             modality === 'text'
-              ? 'border-slate-200/90 bg-linear-to-b from-slate-50/70 via-white to-white'
+              ? 'border-indigo-200/90 bg-linear-to-b from-indigo-50/30 via-white to-white'
               : modality === 'image'
               ? 'border-violet-200/90 bg-linear-to-b from-violet-50/40 via-white to-white'
               : 'border-rose-200/90 bg-linear-to-b from-rose-50/40 via-white to-white'
           }`}
         >
+          {/* Audio Instruction & Permission Guide Helper Banner */}
+          {showAudioHelper && (
+            <div className="mb-5 p-4 rounded-xl bg-indigo-50/90 border border-indigo-200 text-xs text-slate-800 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-indigo-950 flex items-center gap-1.5">
+                  <Mic className="w-4 h-4 text-indigo-600" />
+                  How to Enable & Use Audio Voice Search:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowAudioHelper(false)}
+                  className="text-slate-500 hover:text-slate-700 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <ol className="list-decimal list-inside space-y-1 text-slate-700">
+                <li>Click the <strong>"Voice Intelligence" (Audio)</strong> button above.</li>
+                <li>When prompted by your browser, select <strong>"Allow"</strong> to grant microphone access.</li>
+                <li>Speak your review query (e.g., <em>"Show reviews with good fabric quality"</em> or <em>"Any complaints about sizing?"</em>).</li>
+                <li>Your speech is converted to text in real time, querying the dataset and filtering matching reviews dynamically!</li>
+              </ol>
+              <p className="text-[11px] text-slate-500 pt-1">
+                * Note: If permission was previously blocked, click the site settings / lock icon in your browser address bar and switch Microphone to <strong>"Allow"</strong>.
+              </p>
+            </div>
+          )}
+
           {/* ========================================================================= */}
-          {/* 1. TEXT SEARCH CONSOLE & TOPIC EXPLORER                                   */}
+          {/* 1. TEXT SEARCH CONSOLE & TOPIC EXPLORER (Keyword)                         */}
           {/* ========================================================================= */}
           {modality === 'text' && (
             <div className="space-y-5">
-              {/* Search Bar with dedicated Search Action Button (No NLP labels) */}
+              {/* Search Bar with dedicated Search Action Button */}
               <div className="flex flex-col sm:flex-row items-stretch gap-2.5">
                 <div className="relative flex-1">
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none text-slate-400">
@@ -560,11 +607,8 @@ export const MultimodalReviewSearch: React.FC<MultimodalReviewSearchProps> = ({
                     <Scan className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-slate-900">
                       Computer Vision & Reverse Product Matcher
-                      <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.2 rounded bg-violet-100 text-violet-800 border border-violet-200">
-                        Vision 2.0
-                      </span>
                     </h3>
                     <p className="text-xs text-slate-500">
                       Visual neural net extracts apparel weave, silhouette, packaging, and hardware cues
@@ -783,11 +827,8 @@ export const MultimodalReviewSearch: React.FC<MultimodalReviewSearchProps> = ({
                     <Radio className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-slate-900">
                       Neural Speech Dictation & Acoustic Console
-                      <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.2 rounded bg-rose-100 text-rose-800 border border-rose-200">
-                        Acoustic AI
-                      </span>
                     </h3>
                     <p className="text-xs text-slate-500">
                       Dictate complex natural language queries to search across verified reviews
@@ -941,6 +982,7 @@ export const MultimodalReviewSearch: React.FC<MultimodalReviewSearchProps> = ({
               </div>
             </div>
           )}
+
         </div>
 
         {/* Unified Omnibar Banner (when query is active) */}
@@ -1119,12 +1161,15 @@ export const MultimodalReviewSearch: React.FC<MultimodalReviewSearchProps> = ({
 
         {/* Results Cards List */}
         {results.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {results.map(({ review, matchScore, matchReasons, matchedKeywords }) => (
-              <div
-                key={review.id}
-                className="bg-white rounded-xl border border-slate-200/90 p-5 hover:border-slate-300 hover:shadow-md transition-all shadow-xs flex flex-col justify-between group"
-              >
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {results.slice(0, resultsDisplayLimit).map(({ review, matchScore, matchReasons, matchedKeywords }) => {
+                const isExpanded = expandedResultIds.has(review.id);
+                return (
+                  <div
+                    key={review.id}
+                    className="bg-white rounded-xl border border-slate-200/90 p-5 hover:border-slate-300 hover:shadow-md transition-all shadow-xs flex flex-col justify-between group"
+                  >
                 <div>
                   {/* Card Top: Match Score & Modality Tag */}
                   <div className="flex items-center justify-between gap-2 mb-3">
@@ -1179,10 +1224,50 @@ export const MultimodalReviewSearch: React.FC<MultimodalReviewSearchProps> = ({
                     </div>
                   </div>
 
-                  {/* Review Content */}
-                  <p className="text-xs text-slate-600 leading-relaxed line-clamp-3 mb-3">
+                  {/* Review Content with Show More / Show Less */}
+                  <p className={`text-xs text-slate-600 leading-relaxed mb-1.5 ${isExpanded ? '' : 'line-clamp-3'}`}>
                     {renderHighlightedSnippet(review.content, matchedKeywords)}
                   </p>
+
+                  {review.content.length > 90 && (
+                    <button
+                      type="button"
+                      onClick={() => toggleExpandResult(review.id)}
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 mb-2.5 cursor-pointer bg-indigo-50/70 hover:bg-indigo-100/70 px-2 py-0.5 rounded transition-colors"
+                    >
+                      {isExpanded ? (
+                        <>
+                          <span>Show less</span>
+                          <ChevronUp className="w-3 h-3" />
+                        </>
+                      ) : (
+                        <>
+                          <span>Show more</span>
+                          <ChevronDown className="w-3 h-3" />
+                        </>
+                      )}
+                    </button>
+                  )}
+
+                  {/* Customer Review Photos if available */}
+                  {review.photos && review.photos.length > 0 && (
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-[10px] text-slate-500 font-medium flex items-center gap-1">
+                        <Camera className="w-3 h-3 text-indigo-500" />
+                        <span>Photos ({review.photos.length}):</span>
+                      </span>
+                      <div className="flex items-center gap-1.5 overflow-x-auto py-0.5">
+                        {review.photos.map((photo, pIdx) => (
+                          <img
+                            key={pIdx}
+                            src={photo}
+                            alt="Customer review photo"
+                            className="w-9 h-9 rounded-lg object-cover border border-slate-200 hover:scale-105 transition-transform"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Aspect Sentiment Pills */}
                   {review.aspects && review.aspects.length > 0 && (
@@ -1232,9 +1317,39 @@ export const MultimodalReviewSearch: React.FC<MultimodalReviewSearchProps> = ({
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        ) : (
+            );
+          })}
+        </div>
+
+          {/* List Pagination / Show More Results & Show Less Results */}
+          {results.length > 6 && (
+            <div className="pt-3 flex items-center justify-center gap-3">
+              {resultsDisplayLimit < results.length ? (
+                <button
+                  type="button"
+                  onClick={() => setResultsDisplayLimit(results.length)}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-white text-slate-800 border border-slate-300 hover:border-slate-400 hover:bg-slate-50 transition-all shadow-2xs cursor-pointer"
+                >
+                  <span>Show More Results ({results.length - resultsDisplayLimit} remaining)</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResultsDisplayLimit(6);
+                    document.getElementById('search-results-section')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-white text-slate-800 border border-slate-300 hover:border-slate-400 hover:bg-slate-50 transition-all shadow-2xs cursor-pointer"
+                >
+                  <span>Show Less Results</span>
+                  <ChevronUp className="w-3.5 h-3.5 text-indigo-600" />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      ) : (
           /* Empty Search State */
           <div className="text-center py-12 px-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
             <Search className="w-10 h-10 text-slate-300 mx-auto mb-3" />

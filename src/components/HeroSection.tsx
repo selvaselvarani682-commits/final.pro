@@ -60,16 +60,17 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
   return (
     <section className="relative overflow-hidden pt-10 pb-12 sm:pt-14 sm:pb-16 border-b border-slate-200">
-      {/* Full-width e-commerce backdrop image at 0.5 (50%) opacity */}
+      {/* Full-width e-commerce backdrop image at 0.7 (70%) opacity */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <img
           src={ecommerceHeroImg}
           alt="E-commerce Background"
           referrerPolicy="no-referrer"
-          className="w-full h-full object-cover object-center opacity-50"
+          className="w-full h-full object-cover object-center opacity-70"
+          style={{ opacity: 0.7 }}
         />
         {/* Soft overlay gradient to ensure pristine text contrast and readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/80 to-slate-50/95" />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-white/70 to-slate-50/85" />
       </div>
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6">

@@ -158,22 +158,6 @@ export const ComparatorView: React.FC<ComparatorViewProps> = ({
               MSRP ₹{prod1.price.toLocaleString('en-IN')}
             </span>
           </div>
-
-          {/* Highlights */}
-          <div className="space-y-1.5 pt-1">
-            <span className="text-[11px] font-bold text-slate-700 block">
-              Key Pros:
-            </span>
-            {prod1.aiSummary.pros.slice(0, 2).map((pro, i) => (
-              <div
-                key={i}
-                className="text-[11px] text-slate-600 flex items-start gap-1.5"
-              >
-                <Check className="w-3 h-3 text-emerald-600 shrink-0 mt-0.5" />
-                <span>{pro}</span>
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* Product B Card */}
@@ -227,22 +211,6 @@ export const ComparatorView: React.FC<ComparatorViewProps> = ({
             <span className="text-[10px] text-slate-500 font-mono">
               MSRP ₹{prod2.price.toLocaleString('en-IN')}
             </span>
-          </div>
-
-          {/* Highlights */}
-          <div className="space-y-1.5 pt-1">
-            <span className="text-[11px] font-bold text-slate-700 block">
-              Key Pros:
-            </span>
-            {prod2.aiSummary.pros.slice(0, 2).map((pro, i) => (
-              <div
-                key={i}
-                className="text-[11px] text-slate-600 flex items-start gap-1.5"
-              >
-                <Check className="w-3 h-3 text-emerald-600 shrink-0 mt-0.5" />
-                <span>{pro}</span>
-              </div>
-            ))}
           </div>
         </div>
       </div>

@@ -5,6 +5,8 @@ import {
   MessageSquarePlus,
   Menu,
   X,
+  Package,
+  ShoppingBag,
 } from 'lucide-react';
 
 export type EnterpriseNavSection =
@@ -12,8 +14,6 @@ export type EnterpriseNavSection =
   | 'products'
   | 'review-search'
   | 'open-reviews'
-  | 'why-us'
-  | 'consumer-voices'
   | 'comparator';
 
 interface EnterpriseNavbarProps {
@@ -22,6 +22,8 @@ interface EnterpriseNavbarProps {
   reviewCount: number;
   onOpenSubmitModal: () => void;
   onFocusSearch: () => void;
+  orderCount?: number;
+  onOpenOrders?: () => void;
 }
 
 export const EnterpriseNavbar: React.FC<EnterpriseNavbarProps> = ({
@@ -30,6 +32,8 @@ export const EnterpriseNavbar: React.FC<EnterpriseNavbarProps> = ({
   reviewCount,
   onOpenSubmitModal,
   onFocusSearch,
+  orderCount = 0,
+  onOpenOrders,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -38,8 +42,6 @@ export const EnterpriseNavbar: React.FC<EnterpriseNavbarProps> = ({
     { id: 'products', label: 'Products' },
     { id: 'review-search', label: 'Multimodal Search' },
     { id: 'open-reviews', label: 'Open Reviews' },
-    { id: 'why-us', label: 'Why Review Analysis' },
-    { id: 'consumer-voices', label: 'Consumer Voices' },
     { id: 'comparator', label: 'Compare Products' },
   ];
 
@@ -83,7 +85,7 @@ export const EnterpriseNavbar: React.FC<EnterpriseNavbarProps> = ({
         </nav>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           {/* Quick Search Button */}
           <button
             id="nav-quick-search-btn"
@@ -94,6 +96,28 @@ export const EnterpriseNavbar: React.FC<EnterpriseNavbarProps> = ({
           >
             <Search className="w-4 h-4" />
           </button>
+
+          {/* Unique My Orders / Purchases Button */}
+          {onOpenOrders && (
+            <button
+              id="nav-orders-btn"
+              onClick={onOpenOrders}
+              className="group relative flex items-center gap-2 px-3 sm:px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-600 border border-emerald-400/40 shadow-sm hover:shadow-emerald-900/30 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+              title="Track Orders, Deliveries & Receipts"
+            >
+              <span className="relative flex items-center justify-center w-5 h-5 rounded-lg bg-emerald-950/30 border border-emerald-300/30 group-hover:bg-emerald-950/40 transition-colors">
+                <ShoppingBag className="w-3.5 h-3.5 text-emerald-100 group-hover:rotate-6 transition-transform duration-200" />
+              </span>
+              <span className="tracking-wide">My Orders</span>
+              {orderCount > 0 ? (
+                <span className="inline-flex items-center justify-center min-w-[20px] h-[20px] px-1.5 text-[10px] font-black font-mono text-emerald-950 bg-amber-300 rounded-full shadow-xs ring-1 ring-amber-400/50 animate-pulse">
+                  {orderCount}
+                </span>
+              ) : (
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-300"></span>
+              )}
+            </button>
+          )}
 
           {/* Submit Review CTA */}
           <button
@@ -125,6 +149,26 @@ export const EnterpriseNavbar: React.FC<EnterpriseNavbarProps> = ({
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
         <div className="lg:hidden border-t border-slate-800 bg-slate-950 px-4 py-3 space-y-1 shadow-2xl">
+          {onOpenOrders && (
+            <div className="pb-2 mb-2 border-b border-slate-800">
+              <button
+                id="mobile-nav-orders-btn"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenOrders();
+                }}
+                className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 border border-emerald-400/30 cursor-pointer shadow-sm"
+              >
+                <div className="flex items-center gap-2">
+                  <ShoppingBag className="w-4 h-4 text-emerald-200" />
+                  <span>My Orders & Shipments</span>
+                </div>
+                <span className="px-2 py-0.5 rounded-full bg-amber-300 text-slate-950 text-[10px] font-black font-mono">
+                  {orderCount} {orderCount === 1 ? 'order' : 'orders'}
+                </span>
+              </button>
+            </div>
+          )}
           {navItems.map((item) => {
             const isActive = activeSection === item.id;
             return (

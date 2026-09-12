@@ -16,9 +16,10 @@ import {
   Zap,
   CheckCircle2,
   X,
-  Plus
+  Plus,
+  ShoppingBag
 } from 'lucide-react';
-import { Product } from '../../types';
+import { Product, PlatformType } from '../../types';
 import { ALL_PRODUCTS, PRODUCT_CATEGORIES } from './productsData';
 import productsTrackedImg from '../../assets/images/products_tracked_img_1788776402378.jpg';
 import marketplacesSyncImg from '../../assets/images/marketplaces_sync_img_1788776421882.jpg';
@@ -26,11 +27,13 @@ import marketplacesSyncImg from '../../assets/images/marketplaces_sync_img_17887
 interface ProductCatalogViewProps {
   onSelectForCompare?: (product: Product) => void;
   onSelectForReview?: (product: Product) => void;
+  onBuyProduct?: (product: Product, platform?: PlatformType) => void;
 }
 
 export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
   onSelectForCompare,
   onSelectForReview,
+  onBuyProduct,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
@@ -115,19 +118,19 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
           >
             <img
               src={productsTrackedImg}
-              alt="Products Tracked"
+              alt="Catalog Inventory"
               referrerPolicy="no-referrer"
               className="w-11 h-11 sm:w-12 sm:h-12 rounded-lg object-cover border border-slate-100 group-hover:scale-105 transition-transform shrink-0"
             />
             <div>
               <div className="text-emerald-600 font-extrabold text-sm sm:text-base leading-tight">
-                {ALL_PRODUCTS.length}
+                Verified
               </div>
               <div className="text-xs font-semibold text-slate-800 leading-tight mt-0.5">
-                Products Tracked
+                Product Catalog
               </div>
               <div className="text-[10px] sm:text-[11px] text-slate-500 font-medium leading-tight mt-0.5">
-                Verified inventory SKUs
+                Multi-category inventory
               </div>
             </div>
           </button>
@@ -278,7 +281,7 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
             ))}
 
             <span className="ml-auto text-slate-500 font-mono text-[11px]">
-              Showing {filteredProducts.length} of {ALL_PRODUCTS.length} products
+              Showing {filteredProducts.length} items
             </span>
           </div>
         </div>
@@ -396,15 +399,25 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
                   <div className="px-4 pb-4 pt-1 flex items-center gap-2">
                     <button
                       onClick={() => setInspectingProduct(product)}
-                      className="flex-1 py-1.5 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors text-center"
+                      className="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors text-center"
                     >
                       Insights
                     </button>
+                    {onBuyProduct && (
+                      <button
+                        onClick={() => onBuyProduct(product)}
+                        title="Buy This Product"
+                        className="flex-1 py-1.5 px-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1 shadow-xs cursor-pointer"
+                      >
+                        <ShoppingBag className="w-3.5 h-3.5" />
+                        <span>Buy Now</span>
+                      </button>
+                    )}
                     {onSelectForCompare && (
                       <button
                         onClick={() => onSelectForCompare(product)}
                         title="Compare in Matrix"
-                        className="py-1.5 px-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-lg transition-colors border border-emerald-200/60"
+                        className="py-1.5 px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-lg transition-colors border border-emerald-200/60 cursor-pointer"
                       >
                         Compare
                       </button>
@@ -413,7 +426,7 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
                       <button
                         onClick={() => onSelectForReview(product)}
                         title="Review this product"
-                        className="p-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
+                        className="p-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors cursor-pointer"
                       >
                         <Plus className="w-4 h-4" />
                       </button>
@@ -489,16 +502,25 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
                         </td>
                         <td className="py-3 px-4 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-1.5">
+                            {onBuyProduct && (
+                              <button
+                                onClick={() => onBuyProduct(p)}
+                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold flex items-center gap-1 cursor-pointer shadow-xs"
+                              >
+                                <ShoppingBag className="w-3 h-3" />
+                                <span>Buy</span>
+                              </button>
+                            )}
                             <button
                               onClick={() => setInspectingProduct(p)}
-                              className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded text-xs"
+                              className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded text-xs cursor-pointer"
                             >
                               Inspect
                             </button>
                             {onSelectForCompare && (
                               <button
                                 onClick={() => onSelectForCompare(p)}
-                                className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded text-xs font-semibold"
+                                className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded text-xs font-semibold cursor-pointer"
                               >
                                 Compare
                               </button>
@@ -648,6 +670,7 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
                         <th className="py-2 px-3">Rating</th>
                         <th className="py-2 px-3">Delivery</th>
                         <th className="py-2 px-3">Authenticity</th>
+                        <th className="py-2 px-3 text-right">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -661,6 +684,21 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
                           <td className="py-2 px-3 text-slate-600">{meta?.deliverySpeed || '2 Days'}</td>
                           <td className="py-2 px-3 text-emerald-600 font-mono font-semibold">
                             {meta?.authenticityRating || 95}%
+                          </td>
+                          <td className="py-2 px-3 text-right">
+                            {onBuyProduct && (
+                              <button
+                                onClick={() => {
+                                  const p = inspectingProduct;
+                                  setInspectingProduct(null);
+                                  onBuyProduct(p, platName as PlatformType);
+                                }}
+                                className="px-2 py-0.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer"
+                              >
+                                <ShoppingBag className="w-3 h-3" />
+                                Buy
+                              </button>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -699,40 +737,13 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
                   </div>
                 </div>
               )}
-
-              {/* Pros and Cons */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                <div className="p-3 bg-emerald-50/60 border border-emerald-200/60 rounded-lg text-xs">
-                  <span className="font-bold text-emerald-800 block mb-1">Key Advantages</span>
-                  <ul className="space-y-1 text-emerald-700">
-                    {inspectingProduct.aiSummary.pros.map((pro, i) => (
-                      <li key={i} className="flex items-start gap-1.5">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                        <span>{pro}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="p-3 bg-rose-50/60 border border-rose-200/60 rounded-lg text-xs">
-                  <span className="font-bold text-rose-800 block mb-1">Considerations</span>
-                  <ul className="space-y-1 text-rose-700">
-                    {inspectingProduct.aiSummary.cons.map((con, i) => (
-                      <li key={i} className="flex items-start gap-1.5">
-                        <X className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" />
-                        <span>{con}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
             </div>
 
             {/* Modal Footer */}
             <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-end gap-2">
               <button
                 onClick={() => setInspectingProduct(null)}
-                className="px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-200 rounded-lg transition-colors"
+                className="px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
               >
                 Close
               </button>
@@ -743,7 +754,7 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
                     setInspectingProduct(null);
                     onSelectForCompare(p);
                   }}
-                  className="px-4 py-2 text-xs font-semibold bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
+                  className="px-4 py-2 text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-200 rounded-lg hover:bg-slate-200 transition-colors cursor-pointer"
                 >
                   Compare This Product
                 </button>
@@ -755,9 +766,22 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
                     setInspectingProduct(null);
                     onSelectForReview(p);
                   }}
-                  className="px-4 py-2 text-xs font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                  className="px-4 py-2 text-xs font-semibold bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
                 >
                   Write Review
+                </button>
+              )}
+              {onBuyProduct && (
+                <button
+                  onClick={() => {
+                    const p = inspectingProduct;
+                    setInspectingProduct(null);
+                    onBuyProduct(p);
+                  }}
+                  className="px-4 py-2 text-xs font-bold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <ShoppingBag className="w-4 h-4" />
+                  <span>Buy This Product (₹{inspectingProduct.price.toLocaleString('en-IN')})</span>
                 </button>
               )}
             </div>

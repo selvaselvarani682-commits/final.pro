@@ -4,17 +4,23 @@ import { HeroSection } from './components/HeroSection';
 import { ProductCatalogView } from './modules/products';
 import { MultimodalReviewSearch } from './modules/review-search';
 import { OpenReviewsCatalog } from './components/OpenReviewsCatalog';
-import { WhyReviewSense } from './components/WhyReviewSense';
-import { ConsumerVoices } from './components/ConsumerVoices';
 import { ProductComparator } from './components/ProductComparator';
+import {
+  BuyProductModal,
+  MyOrdersModal,
+  getStoredOrders,
+  saveStoredOrder,
+  ProductOrder,
+} from './modules/buying';
+import { ALL_PRODUCTS } from './modules/products/productsData';
 import { SubmitReviewModal } from './components/SubmitReviewModal';
 import { ReviewDrawer } from './components/ReviewDrawer';
 import { Footer } from './components/Footer';
-import { Product, StoredReview } from './types';
+import { Product, StoredReview, PlatformType } from './types';
 import {
   getStoredReviews,
-  fetchReviewsFromServer,
-  saveReviewToStorage,
+  fetchReviewsFromDatabase,
+  saveReviewToDatabase,
   deleteReviewFromStorage,
 } from './services/reviewStorage';
 
@@ -26,6 +32,12 @@ export function App() {
   const [modalInitialProductId, setModalInitialProductId] = useState<string | undefined>(undefined);
   const [compareProductAId, setCompareProductAId] = useState<string | undefined>(undefined);
 
+  // Orders and Buying product flow state
+  const [orders, setOrders] = useState<ProductOrder[]>(() => getStoredOrders());
+  const [buyingProduct, setBuyingProduct] = useState<Product | null>(null);
+  const [buyingPlatform, setBuyingPlatform] = useState<PlatformType | undefined>(undefined);
+  const [isOrdersModalOpen, setIsOrdersModalOpen] = useState<boolean>(false);
+
   // Filter and Search states
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All Categories');
@@ -34,14 +46,17 @@ export function App() {
 
   const loadReviews = async () => {
     try {
-      const data = getStoredReviews();
-      setReviews(data);
-      const serverData = await fetchReviewsFromServer();
-      if (serverData && serverData.length > 0) {
-        setReviews(serverData);
+      // 1. Instantly load local reviews for zero lag UI
+      const localData = getStoredReviews();
+      setReviews(localData);
+
+      // 2. Fetch live data from Firestore cloud database
+      const dbData = await fetchReviewsFromDatabase();
+      if (dbData && dbData.length > 0) {
+        setReviews(dbData);
       }
     } catch (err) {
-      console.error('Failed to load reviews:', err);
+      console.error('Failed to load reviews from database:', err);
     }
   };
 
@@ -49,10 +64,10 @@ export function App() {
     loadReviews();
   }, []);
 
-  const handleReviewSubmitted = (
+  const handleReviewSubmitted = async (
     newReviewData: Omit<StoredReview, 'id' | 'createdAt'>
   ) => {
-    const created = saveReviewToStorage(newReviewData);
+    const created = await saveReviewToDatabase(newReviewData);
     setReviews((prev) => [created, ...prev]);
     // Smooth scroll down to open reviews so user sees their new review
     const el = document.getElementById('open-reviews-section');
@@ -81,10 +96,6 @@ export function App() {
       document.getElementById('review-search-section')?.scrollIntoView({ behavior: 'smooth' });
     } else if (section === 'open-reviews') {
       document.getElementById('open-reviews-section')?.scrollIntoView({ behavior: 'smooth' });
-    } else if (section === 'why-us') {
-      document.getElementById('why-us-section')?.scrollIntoView({ behavior: 'smooth' });
-    } else if (section === 'consumer-voices') {
-      document.getElementById('consumer-voices-section')?.scrollIntoView({ behavior: 'smooth' });
     } else if (section === 'comparator') {
       document.getElementById('comparator-section')?.scrollIntoView({ behavior: 'smooth' });
     }
@@ -99,6 +110,34 @@ export function App() {
   const handleSelectProductForReview = (product: Product) => {
     setModalInitialProductId(product.id);
     setIsSubmitModalOpen(true);
+  };
+
+  const handleBuyProduct = (product: Product, platform?: PlatformType) => {
+    setBuyingProduct(product);
+    setBuyingPlatform(platform);
+  };
+
+  const handleBuyFromReview = (productTitle: string, productId?: string) => {
+    const found =
+      ALL_PRODUCTS.find(
+        (p) =>
+          (productId && p.id === productId) ||
+          p.title.toLowerCase().includes(productTitle.toLowerCase()) ||
+          productTitle.toLowerCase().includes(p.title.toLowerCase())
+      ) || ALL_PRODUCTS[0];
+    setBuyingProduct(found);
+    setBuyingPlatform(undefined);
+  };
+
+  const handleOrderPlaced = (order: ProductOrder) => {
+    const updated = saveStoredOrder(order);
+    setOrders(updated);
+  };
+
+  const handleBuyAgain = (order: ProductOrder) => {
+    const p = ALL_PRODUCTS.find((item) => item.id === order.productId) || ALL_PRODUCTS[0];
+    setBuyingProduct(p);
+    setBuyingPlatform(order.platform);
   };
 
   const handleExecuteSearch = () => {
@@ -133,6 +172,8 @@ export function App() {
           setIsSubmitModalOpen(true);
         }}
         onFocusSearch={handleFocusSearch}
+        orderCount={orders.length}
+        onOpenOrders={() => setIsOrdersModalOpen(true)}
       />
 
       <main className="flex-1 w-full">
@@ -160,6 +201,7 @@ export function App() {
         <ProductCatalogView
           onSelectForCompare={handleSelectProductForCompare}
           onSelectForReview={handleSelectProductForReview}
+          onBuyProduct={handleBuyProduct}
         />
 
         {/* Multimodal Review Search Module (Text, Image, Voice) */}
@@ -188,23 +230,10 @@ export function App() {
           onSearchChange={setSearchQuery}
         />
 
-        {/* Why ReviewSense */}
-        <WhyReviewSense
-          onOpenSubmitModal={() => {
-            setModalInitialProductId(undefined);
-            setIsSubmitModalOpen(true);
-          }}
-        />
-
-        {/* Consumer Voices */}
-        <ConsumerVoices
-          reviews={reviews}
-          onSelectReview={setSelectedReview}
-        />
-
         {/* Cross-Marketplace Comparator */}
         <ProductComparator
           selectedProductAId={compareProductAId}
+          onBuyProduct={handleBuyProduct}
         />
       </main>
 
@@ -215,6 +244,7 @@ export function App() {
       <ReviewDrawer
         review={selectedReview}
         onClose={() => setSelectedReview(null)}
+        onBuyProduct={handleBuyFromReview}
       />
 
       {/* Modal for Submitting New Reviews */}
@@ -223,6 +253,35 @@ export function App() {
         onClose={() => setIsSubmitModalOpen(false)}
         onReviewSubmitted={handleReviewSubmitted}
         initialProductId={modalInitialProductId}
+      />
+
+      {/* Product Buying & Checkout Flow Modal */}
+      <BuyProductModal
+        isOpen={!!buyingProduct}
+        onClose={() => {
+          setBuyingProduct(null);
+          setBuyingPlatform(undefined);
+        }}
+        product={buyingProduct}
+        initialPlatform={buyingPlatform}
+        onOrderPlaced={handleOrderPlaced}
+        onOpenReviewModal={(prodId) => {
+          setModalInitialProductId(prodId);
+          setIsSubmitModalOpen(true);
+        }}
+        onViewOrders={() => setIsOrdersModalOpen(true)}
+      />
+
+      {/* My Orders & Tracking Drawer Modal */}
+      <MyOrdersModal
+        isOpen={isOrdersModalOpen}
+        onClose={() => setIsOrdersModalOpen(false)}
+        orders={orders}
+        onOpenReviewModal={(prodId) => {
+          setModalInitialProductId(prodId);
+          setIsSubmitModalOpen(true);
+        }}
+        onBuyAgain={handleBuyAgain}
       />
     </div>
   );

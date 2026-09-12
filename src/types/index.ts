@@ -60,4 +60,5 @@ export interface StoredReview {
   summary: string;
   verified: boolean;
   createdAt: string;
+  photos?: string[];
 }

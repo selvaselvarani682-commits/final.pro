@@ -15,6 +15,10 @@ import {
   RotateCcw,
   Tag,
   ThumbsUp,
+  ImagePlus,
+  UploadCloud,
+  Trash2,
+  Camera,
 } from 'lucide-react';
 
 interface SubmitReviewModalProps {
@@ -39,6 +43,21 @@ const QUICK_TAG_SUGGESTIONS = [
   'Value for money',
   'Fast delivery',
   'Slightly warm earcups',
+];
+
+const SAMPLE_PHOTO_PRESETS = [
+  {
+    label: 'Unboxing & Box',
+    url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=80',
+  },
+  {
+    label: 'Product Detail',
+    url: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=500&auto=format&fit=crop&q=80',
+  },
+  {
+    label: 'In-Hand / Usage',
+    url: 'https://images.unsplash.com/photo-1572536147248-ac59a8abfa4b?w=500&auto=format&fit=crop&q=80',
+  },
 ];
 
 const PLATFORMS: PlatformType[] = [
@@ -72,6 +91,45 @@ export const SubmitReviewModal: React.FC<SubmitReviewModalProps> = ({
   const [reviewerName, setReviewerName] = useState<string>('');
   const [platform, setPlatform] = useState<PlatformType>('Amazon');
   const [isVerified, setIsVerified] = useState<boolean>(true);
+
+  // Photo upload states
+  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
+  const [isPhotoDragOver, setIsPhotoDragOver] = useState<boolean>(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePhotoFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const remainingSlots = 4 - uploadedPhotos.length;
+    if (remainingSlots <= 0) {
+      alert('You can attach up to 4 photos per review.');
+      return;
+    }
+
+    const filesToRead = Array.from(files).slice(0, remainingSlots);
+    filesToRead.forEach((file) => {
+      if (!file.type.startsWith('image/')) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        if (result) {
+          setUploadedPhotos((prev) => [...prev, result].slice(0, 4));
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleRemovePhoto = (index: number) => {
+    setUploadedPhotos((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAddPresetPhoto = (url: string) => {
+    if (uploadedPhotos.length >= 4) {
+      alert('Maximum 4 photos reached.');
+      return;
+    }
+    setUploadedPhotos((prev) => [...prev, url].slice(0, 4));
+  };
 
   // Status states
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -163,6 +221,7 @@ export const SubmitReviewModal: React.FC<SubmitReviewModalProps> = ({
     setReviewerName('Alex Chen');
     setPlatform('Amazon');
     setIsVerified(true);
+    setUploadedPhotos([SAMPLE_PHOTO_PRESETS[0].url]);
   };
 
   // Quick reset
@@ -172,6 +231,7 @@ export const SubmitReviewModal: React.FC<SubmitReviewModalProps> = ({
     setReviewerName('');
     setRating(5);
     setCustomProductName('');
+    setUploadedPhotos([]);
   };
 
   // Submission handler
@@ -208,6 +268,7 @@ export const SubmitReviewModal: React.FC<SubmitReviewModalProps> = ({
         cons: analysis.cons,
         summary: analysis.summary,
         verified: isVerified,
+        photos: uploadedPhotos.length > 0 ? uploadedPhotos : undefined,
       });
 
       setIsSuccess(true);
@@ -471,6 +532,112 @@ export const SubmitReviewModal: React.FC<SubmitReviewModalProps> = ({
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* 4.5 Customer Review Photos Upload */}
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <ImagePlus className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Upload Photos of the Product</span>
+                  <span className="text-[10px] font-normal text-slate-500">(Optional • max 4)</span>
+                </label>
+                {uploadedPhotos.length > 0 && (
+                  <span className="text-[11px] font-mono text-indigo-600 font-semibold">
+                    {uploadedPhotos.length}/4 attached
+                  </span>
+                )}
+              </div>
+
+              {/* Drag and drop upload box */}
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsPhotoDragOver(true);
+                }}
+                onDragLeave={() => setIsPhotoDragOver(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsPhotoDragOver(false);
+                  handlePhotoFiles(e.dataTransfer.files);
+                }}
+                onClick={() => photoInputRef.current?.click()}
+                className={`border-2 border-dashed rounded-xl p-3 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-1.5 ${
+                  isPhotoDragOver
+                    ? 'border-indigo-500 bg-indigo-50/50'
+                    : 'border-slate-200 hover:border-indigo-300 bg-slate-50/60 hover:bg-slate-50'
+                }`}
+              >
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => handlePhotoFiles(e.target.files)}
+                  className="hidden"
+                />
+                <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                  <UploadCloud className="w-4 h-4" />
+                </div>
+                <div className="text-xs text-slate-600">
+                  <span className="font-semibold text-indigo-600 hover:underline">Click to upload</span> or drag and drop photos
+                </div>
+                <p className="text-[10px] text-slate-400">
+                  PNG, JPG, or WEBP showing real product packaging, fit, or condition
+                </p>
+              </div>
+
+              {/* Uploaded Photo Thumbnails */}
+              {uploadedPhotos.length > 0 && (
+                <div className="grid grid-cols-4 gap-2 pt-1">
+                  {uploadedPhotos.map((photo, idx) => (
+                    <div
+                      key={idx}
+                      className="relative rounded-lg overflow-hidden border border-slate-200 aspect-square group bg-slate-100"
+                    >
+                      <img
+                        src={photo}
+                        alt={`Review photo ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemovePhoto(idx);
+                        }}
+                        className="absolute top-1 right-1 w-5 h-5 rounded-full bg-slate-900/80 text-white flex items-center justify-center hover:bg-rose-600 transition-colors shadow-xs"
+                        title="Remove photo"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                      <span className="absolute bottom-1 left-1 px-1 rounded bg-slate-900/70 text-white text-[9px] font-mono">
+                        #{idx + 1}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Quick sample photo presets */}
+              {uploadedPhotos.length < 4 && (
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
+                    <Camera className="w-2.5 h-2.5 text-indigo-500" />
+                    Or add sample proof:
+                  </span>
+                  {SAMPLE_PHOTO_PRESETS.map((preset) => (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => handleAddPresetPhoto(preset.url)}
+                      className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-white hover:bg-indigo-50 hover:text-indigo-700 text-slate-600 border border-slate-200 transition-colors cursor-pointer flex items-center gap-1"
+                    >
+                      <span>+ {preset.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* 5. Reviewer & Platform Row */}
