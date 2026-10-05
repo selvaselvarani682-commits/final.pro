@@ -8,7 +8,7 @@ import {
   orderBy,
   limit,
 } from 'firebase/firestore';
-import { db, testFirestoreConnection } from './firebase';
+import { db, testFirestoreConnection, handleFirestoreError, OperationType } from './firebase';
 import { StoredReview } from '../types';
 import { EXPANDED_REVIEWS_CATALOG } from '../data/expandedReviews';
 
@@ -41,7 +41,10 @@ export function getStoredReviews(): StoredReview[] {
 export async function fetchReviewsFromDatabase(): Promise<StoredReview[]> {
   try {
     // Check connection first
-    await testFirestoreConnection();
+    const isOnline = await testFirestoreConnection();
+    if (!isOnline) {
+      return fetchReviewsFromServer();
+    }
 
     const reviewsCol = collection(db, REVIEWS_COLLECTION);
     const q = query(reviewsCol, orderBy('createdAt', 'desc'), limit(150));
@@ -66,12 +69,15 @@ export async function fetchReviewsFromDatabase(): Promise<StoredReview[]> {
         seedReviews.slice(0, 25).map((rev) => {
           return setDoc(doc(db, REVIEWS_COLLECTION, rev.id), rev, { merge: true });
         })
-      ).catch((err) => console.warn('Database seed warning:', err));
+      ).catch((err) => console.warn('Database seed notice:', err));
 
       return seedReviews;
     }
-  } catch (err) {
-    console.warn('Firestore fetch failed, falling back to local storage and server API:', err);
+  } catch (err: any) {
+    if (err?.code === 'permission-denied') {
+      handleFirestoreError(err, OperationType.LIST, REVIEWS_COLLECTION);
+    }
+    console.warn('Firestore fetch notice, using local cache and server API:', err?.message || err);
     return fetchReviewsFromServer();
   }
 }
@@ -90,7 +96,7 @@ export async function fetchReviewsFromServer(): Promise<StoredReview[]> {
       }
     }
   } catch (err) {
-    console.warn('Express backend fallback warning:', err);
+    console.warn('Express backend fallback notice:', err);
   }
   return getStoredReviews();
 }
@@ -122,8 +128,11 @@ export async function saveReviewToDatabase(
     const reviewDocRef = doc(db, REVIEWS_COLLECTION, newId);
     await setDoc(reviewDocRef, newReview);
     console.info(`Saved review ${newId} to Firestore cloud database.`);
-  } catch (err) {
-    console.error('Failed to write review directly to Firestore:', err);
+  } catch (err: any) {
+    if (err?.code === 'permission-denied') {
+      handleFirestoreError(err, OperationType.WRITE, `${REVIEWS_COLLECTION}/${newId}`);
+    }
+    console.warn('Notice saving review to Firestore:', err?.message || err);
   }
 
   // Also sync to Express backend asynchronously
@@ -132,7 +141,7 @@ export async function saveReviewToDatabase(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(newReview),
   }).catch((err) => {
-    console.warn('Express backend sync warning for review post:', err);
+    console.warn('Express backend sync notice for review post:', err);
   });
 
   return newReview;
@@ -158,8 +167,11 @@ export function saveReviewToStorage(
   }
 
   // Write to Firestore asynchronously
-  setDoc(doc(db, REVIEWS_COLLECTION, newId), newReview).catch((err) => {
-    console.warn('Asynchronous Firestore save warning:', err);
+  setDoc(doc(db, REVIEWS_COLLECTION, newId), newReview).catch((err: any) => {
+    if (err?.code === 'permission-denied') {
+      handleFirestoreError(err, OperationType.WRITE, `${REVIEWS_COLLECTION}/${newId}`);
+    }
+    console.warn('Notice on async Firestore save:', err?.message || err);
   });
 
   // Sync to Express backend
@@ -168,7 +180,7 @@ export function saveReviewToStorage(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(newReview),
   }).catch((err) => {
-    console.warn('Express backend sync warning for review post:', err);
+    console.warn('Express backend sync notice for review post:', err);
   });
 
   return newReview;
@@ -187,15 +199,18 @@ export function deleteReviewFromStorage(id: string): StoredReview[] {
   }
 
   // Delete from Firestore cloud database
-  deleteDoc(doc(db, REVIEWS_COLLECTION, id)).catch((err) => {
-    console.warn('Failed to delete review from Firestore:', err);
+  deleteDoc(doc(db, REVIEWS_COLLECTION, id)).catch((err: any) => {
+    if (err?.code === 'permission-denied') {
+      handleFirestoreError(err, OperationType.DELETE, `${REVIEWS_COLLECTION}/${id}`);
+    }
+    console.warn('Notice deleting review from Firestore:', err?.message || err);
   });
 
   // Sync delete to Express backend
   fetch(`/api/reviews/${id}`, {
     method: 'DELETE',
   }).catch((err) => {
-    console.warn('Express backend sync warning for review delete:', err);
+    console.warn('Express backend sync notice for review delete:', err);
   });
 
   return updated;

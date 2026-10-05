@@ -1,290 +1,323 @@
-import React, { useState, useEffect } from 'react';
-import { EnterpriseNavbar, EnterpriseNavSection } from './components/EnterpriseNavbar';
-import { HeroSection } from './components/HeroSection';
-import { ProductCatalogView } from './modules/products';
-import { MultimodalReviewSearch } from './modules/review-search';
-import { OpenReviewsCatalog } from './components/OpenReviewsCatalog';
-import { ProductComparator } from './components/ProductComparator';
-import {
-  BuyProductModal,
-  MyOrdersModal,
-  getStoredOrders,
-  saveStoredOrder,
-  ProductOrder,
-} from './modules/buying';
-import { ALL_PRODUCTS } from './modules/products/productsData';
-import { SubmitReviewModal } from './components/SubmitReviewModal';
-import { ReviewDrawer } from './components/ReviewDrawer';
+import React, { useState } from 'react';
+import { ReviewAINavbar } from './components/ReviewAINavbar';
 import { Footer } from './components/Footer';
-import { Product, StoredReview, PlatformType } from './types';
-import {
-  getStoredReviews,
-  fetchReviewsFromDatabase,
-  saveReviewToDatabase,
-  deleteReviewFromStorage,
-} from './services/reviewStorage';
+
+import { HomePageView } from './pages/HomePageView';
+import { ProductListingPageView } from './pages/ProductListingPageView';
+import { ProductDetailsPageView } from './pages/ProductDetailsPageView';
+import { AITextAnalysisView } from './pages/AITextAnalysisView';
+import { AIVoiceAnalysisView } from './pages/AIVoiceAnalysisView';
+import { AIImageAnalysisView } from './pages/AIImageAnalysisView';
+import { PlatformComparisonView } from './pages/PlatformComparisonView';
+import { CartPageView } from './pages/CartPageView';
+import { UserProfilePageView } from './pages/UserProfilePageView';
+import { AdminPanelView } from './pages/AdminPanelView';
+
+import { STORYBOARD_PRODUCTS } from './data/storyboardProducts';
+import { Product, CartItem, StoryboardPage } from './types';
+import { saveReviewToDatabase } from './services/reviewStorage';
+import ecommerceBg from './assets/images/ecommerce_page_bg_1790847190923.jpg';
+import { CheckCircle2 } from 'lucide-react';
 
 export function App() {
-  const [activeSection, setActiveSection] = useState<EnterpriseNavSection>('overview');
-  const [reviews, setReviews] = useState<StoredReview[]>([]);
-  const [selectedReview, setSelectedReview] = useState<StoredReview | null>(null);
-  const [isSubmitModalOpen, setIsSubmitModalOpen] = useState<boolean>(false);
-  const [modalInitialProductId, setModalInitialProductId] = useState<string | undefined>(undefined);
-  const [compareProductAId, setCompareProductAId] = useState<string | undefined>(undefined);
-
-  // Orders and Buying product flow state
-  const [orders, setOrders] = useState<ProductOrder[]>(() => getStoredOrders());
-  const [buyingProduct, setBuyingProduct] = useState<Product | null>(null);
-  const [buyingPlatform, setBuyingPlatform] = useState<PlatformType | undefined>(undefined);
-  const [isOrdersModalOpen, setIsOrdersModalOpen] = useState<boolean>(false);
-
-  // Filter and Search states
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState<StoryboardPage>('home');
+  const [products, setProducts] = useState<Product[]>(STORYBOARD_PRODUCTS);
+  const [selectedProduct, setSelectedProduct] = useState<Product>(STORYBOARD_PRODUCTS[0]);
   const [selectedCategory, setSelectedCategory] = useState<string>('All Categories');
-  const [selectedPlatform, setSelectedPlatform] = useState<string>('All Platforms');
-  const [selectedSentiment, setSelectedSentiment] = useState<string>('All Sentiments');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
-  const loadReviews = async () => {
-    try {
-      // 1. Instantly load local reviews for zero lag UI
-      const localData = getStoredReviews();
-      setReviews(localData);
+  // Cart state initialized with 2 sample items (matching red badge "2" in screenshot)
+  const [cart, setCart] = useState<CartItem[]>([
+    {
+      product: STORYBOARD_PRODUCTS[0], // iPhone 15
+      quantity: 1,
+      selectedColor: '#60A5FA',
+      selectedStorage: '128GB',
+    },
+    {
+      product: STORYBOARD_PRODUCTS[1], // Nike Shoes
+      quantity: 1,
+      selectedColor: '#1E293B',
+      selectedStorage: 'UK 9',
+    },
+  ]);
 
-      // 2. Fetch live data from Firestore cloud database
-      const dbData = await fetchReviewsFromDatabase();
-      if (dbData && dbData.length > 0) {
-        setReviews(dbData);
-      }
-    } catch (err) {
-      console.error('Failed to load reviews from database:', err);
-    }
+  // Toast Notification state
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 2800);
   };
 
-  useEffect(() => {
-    loadReviews();
-  }, []);
-
-  const handleReviewSubmitted = async (
-    newReviewData: Omit<StoredReview, 'id' | 'createdAt'>
+  // Add to Cart handler
+  const handleAddToCart = (
+    product: Product,
+    selectedColor?: string,
+    selectedStorage?: string
   ) => {
-    const created = await saveReviewToDatabase(newReviewData);
-    setReviews((prev) => [created, ...prev]);
-    // Smooth scroll down to open reviews so user sees their new review
-    const el = document.getElementById('open-reviews-section');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  const handleDeleteReview = (id: string, title: string) => {
-    if (window.confirm(`Are you sure you want to remove the review for "${title}"?`)) {
-      const updated = deleteReviewFromStorage(id);
-      setReviews(updated);
-      if (selectedReview?.id === id) {
-        setSelectedReview(null);
+    setCart((prev) => {
+      const existing = prev.find((item) => item.product.id === product.id);
+      if (existing) {
+        return prev.map((item) =>
+          item.product.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
       }
+      return [
+        ...prev,
+        {
+          product,
+          quantity: 1,
+          selectedColor: selectedColor || product.colors?.[0],
+          selectedStorage: selectedStorage || product.storageOptions?.[0],
+        },
+      ];
+    });
+    showToast(`Added "${product.title}" to Cart!`);
+  };
+
+  // Cart quantity update
+  const handleUpdateCartQuantity = (productId: string, delta: number) => {
+    setCart((prev) =>
+      prev
+        .map((item) => {
+          if (item.product.id === productId) {
+            const newQty = item.quantity + delta;
+            return newQty > 0 ? { ...item, quantity: newQty } : null;
+          }
+          return item;
+        })
+        .filter(Boolean) as CartItem[]
+    );
+  };
+
+  const handleRemoveCartItem = (productId: string) => {
+    setCart((prev) => prev.filter((item) => item.product.id !== productId));
+    showToast('Item removed from Cart');
+  };
+
+  const handleClearCart = () => {
+    setCart([]);
+  };
+
+  // Select Product and view details
+  const handleSelectProduct = (product: Product) => {
+    setSelectedProduct(product);
+    setCurrentPage('product-details');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Navigation helper
+  const handleNavigate = (page: StoryboardPage) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Admin delete product
+  const handleDeleteProduct = (id: string) => {
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+    showToast('Product deleted from catalog');
+  };
+
+  // Admin add product
+  const handleAddProduct = (newProduct: Product) => {
+    setProducts((prev) => [newProduct, ...prev]);
+    showToast(`Product "${newProduct.title}" added to catalog`);
+  };
+
+  // Save Review to Firestore Cloud Database
+  const handleSaveReviewToFirestore = async (reviewData: any) => {
+    try {
+      await saveReviewToDatabase(reviewData);
+      showToast('Review successfully published to Cloud Firestore!');
+    } catch (err) {
+      console.error('Error saving review to Firestore:', err);
+      showToast('Review saved locally and sent to queue.');
     }
   };
 
-  const handleSelectSection = (section: EnterpriseNavSection) => {
-    setActiveSection(section);
-    if (section === 'overview') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (section === 'products') {
-      document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
-    } else if (section === 'review-search') {
-      document.getElementById('review-search-section')?.scrollIntoView({ behavior: 'smooth' });
-    } else if (section === 'open-reviews') {
-      document.getElementById('open-reviews-section')?.scrollIntoView({ behavior: 'smooth' });
-    } else if (section === 'comparator') {
-      document.getElementById('comparator-section')?.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  const handleSelectProductForCompare = (product: Product) => {
-    setCompareProductAId(product.id);
-    setActiveSection('comparator');
-    document.getElementById('comparator-section')?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const handleSelectProductForReview = (product: Product) => {
-    setModalInitialProductId(product.id);
-    setIsSubmitModalOpen(true);
-  };
-
-  const handleBuyProduct = (product: Product, platform?: PlatformType) => {
-    setBuyingProduct(product);
-    setBuyingPlatform(platform);
-  };
-
-  const handleBuyFromReview = (productTitle: string, productId?: string) => {
-    const found =
-      ALL_PRODUCTS.find(
-        (p) =>
-          (productId && p.id === productId) ||
-          p.title.toLowerCase().includes(productTitle.toLowerCase()) ||
-          productTitle.toLowerCase().includes(p.title.toLowerCase())
-      ) || ALL_PRODUCTS[0];
-    setBuyingProduct(found);
-    setBuyingPlatform(undefined);
-  };
-
-  const handleOrderPlaced = (order: ProductOrder) => {
-    const updated = saveStoredOrder(order);
-    setOrders(updated);
-  };
-
-  const handleBuyAgain = (order: ProductOrder) => {
-    const p = ALL_PRODUCTS.find((item) => item.id === order.productId) || ALL_PRODUCTS[0];
-    setBuyingProduct(p);
-    setBuyingPlatform(order.platform);
-  };
-
-  const handleExecuteSearch = () => {
-    document.getElementById('open-reviews-section')?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const handleFocusSearch = () => {
-    const input = document.getElementById('hero-search-input');
-    if (input) {
-      input.focus();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-
-  // Average Trust Score
-  const avgTrustScore =
-    reviews.length > 0
-      ? Math.round(
-          reviews.reduce((acc, r) => acc + r.trustScore, 0) / reviews.length
-        )
-      : 95;
+  const totalCartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-[#FCA92B] selection:text-slate-950">
-      {/* Enterprise Navigation */}
-      <EnterpriseNavbar
-        activeSection={activeSection}
-        onSelectSection={handleSelectSection}
-        reviewCount={reviews.length}
-        onOpenSubmitModal={() => {
-          setModalInitialProductId(undefined);
-          setIsSubmitModalOpen(true);
-        }}
-        onFocusSearch={handleFocusSearch}
-        orderCount={orders.length}
-        onOpenOrders={() => setIsOrdersModalOpen(true)}
-      />
+    <div className="min-h-screen bg-white text-slate-900 flex flex-col font-sans relative selection:bg-indigo-600 selection:text-white">
+      {/* 
+        Background Layer:
+        White base with e-commerce background image at 0.7 opacity
+      */}
+      <div
+        className="fixed inset-0 pointer-events-none z-0 overflow-hidden"
+        aria-hidden="true"
+      >
+        <img
+          src={ecommerceBg}
+          alt="E-commerce background"
+          className="w-full h-full object-cover object-center"
+          style={{ opacity: 0.7 }}
+        />
+        <div className="absolute inset-0 bg-white/40 backdrop-blur-[0.5px]" />
+      </div>
 
-      <main className="flex-1 w-full">
-        {/* Hero Section */}
-        <HeroSection
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          selectedCategory={selectedCategory}
-          onCategoryChange={setSelectedCategory}
-          selectedPlatform={selectedPlatform}
-          onPlatformChange={setSelectedPlatform}
-          selectedSentiment={selectedSentiment}
-          onSentimentChange={setSelectedSentiment}
-          onExecuteSearch={handleExecuteSearch}
-          onOpenSubmitModal={() => {
-            setModalInitialProductId(undefined);
-            setIsSubmitModalOpen(true);
+      {/* Main Content Layer */}
+      <div className="relative z-10 flex flex-col flex-1">
+        {/* Clean Header & Navigation matching uploaded screenshot (No top black box, No login) */}
+        <ReviewAINavbar
+          currentPage={currentPage}
+          onNavigate={handleNavigate}
+          cartCount={totalCartCount}
+          onSearch={(query) => {
+            setSearchQuery(query);
+            setCurrentPage('products');
           }}
-          totalReviewsCount={reviews.length}
-          avgTrustScore={avgTrustScore}
-          onNavigateToReviewSearch={() => handleSelectSection('review-search')}
-        />
-
-        {/* Dedicated Products Module */}
-        <ProductCatalogView
-          onSelectForCompare={handleSelectProductForCompare}
-          onSelectForReview={handleSelectProductForReview}
-          onBuyProduct={handleBuyProduct}
-        />
-
-        {/* Multimodal Review Search Module (Text, Image, Voice) */}
-        <MultimodalReviewSearch
-          reviews={reviews}
-          onSelectReview={setSelectedReview}
-          onSelectProductForCompare={handleSelectProductForCompare}
-        />
-
-        {/* Open Reviews Catalog */}
-        <OpenReviewsCatalog
-          reviews={reviews}
-          onSelectReview={setSelectedReview}
-          onDeleteReview={handleDeleteReview}
-          onOpenSubmitModal={() => {
-            setModalInitialProductId(undefined);
-            setIsSubmitModalOpen(true);
-          }}
-          selectedCategory={selectedCategory}
-          onCategoryChange={setSelectedCategory}
-          selectedPlatform={selectedPlatform}
-          onPlatformChange={setSelectedPlatform}
-          selectedSentiment={selectedSentiment}
-          onSentimentChange={setSelectedSentiment}
           searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
+          selectedCategory={selectedCategory}
+          onSelectCategory={(cat) => {
+            setSelectedCategory(cat);
+            if (currentPage !== 'products' && currentPage !== 'home') {
+              setCurrentPage('products');
+            }
+          }}
         />
 
-        {/* Cross-Marketplace Comparator */}
-        <ProductComparator
-          selectedProductAId={compareProductAId}
-          onBuyProduct={handleBuyProduct}
-        />
-      </main>
+        {/* Floating Toast Notification */}
+        {toastMessage && (
+          <div className="fixed bottom-6 right-6 z-50 bg-slate-900/95 backdrop-blur-md text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-700 animate-in fade-in slide-in-from-bottom-4 duration-200">
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+            <span className="text-xs sm:text-sm font-semibold">{toastMessage}</span>
+          </div>
+        )}
 
-      {/* Enterprise Footer */}
-      <Footer />
+        {/* 
+          All Modules:
+          - First Page (Home): Exactly matching the uploaded screenshot with:
+            1. Hero Banner ("Shop Smarter with AI Review Analysis" + 4 modality pills + phones + AI Analysis card)
+            2. 8 Circular Category Icons
+            3. 6 Featured Products Grid
+            4. 3 Promotional Banners (Top Brands Deals, Beauty & Personal Care, Home Essentials)
+            5. Value Propositions & Trust Bar (Secure Payments, Fast Delivery, Easy Returns, 24/7 Support)
+          - Product Listing, Product Details, AI Review (Text, Voice, Image), Platform Comparison, Cart, Profile, Admin
+        */}
+        <main className="flex-1 pb-12">
+          {/* First Page: Home Page (Matching Uploaded Image) */}
+          {currentPage === 'home' && (
+            <HomePageView
+              products={products}
+              onSelectProduct={handleSelectProduct}
+              onNavigate={handleNavigate}
+              onAddToCart={handleAddToCart}
+            />
+          )}
 
-      {/* Slide-over / Modal for Review Inspection */}
-      <ReviewDrawer
-        review={selectedReview}
-        onClose={() => setSelectedReview(null)}
-        onBuyProduct={handleBuyFromReview}
-      />
+          {/* Product Listing Module */}
+          {currentPage === 'products' && (
+            <ProductListingPageView
+              products={products}
+              onSelectProduct={handleSelectProduct}
+              onNavigate={handleNavigate}
+              onAddToCart={handleAddToCart}
+              selectedCategory={selectedCategory}
+              onSelectCategory={setSelectedCategory}
+              searchQuery={searchQuery}
+            />
+          )}
 
-      {/* Modal for Submitting New Reviews */}
-      <SubmitReviewModal
-        isOpen={isSubmitModalOpen}
-        onClose={() => setIsSubmitModalOpen(false)}
-        onReviewSubmitted={handleReviewSubmitted}
-        initialProductId={modalInitialProductId}
-      />
+          {/* Product Details Module */}
+          {currentPage === 'product-details' && (
+            <ProductDetailsPageView
+              product={selectedProduct}
+              onAddToCart={handleAddToCart}
+              onBuyNow={(prod) => {
+                handleAddToCart(prod);
+                setCurrentPage('cart');
+              }}
+              onNavigate={handleNavigate}
+              onSelectProductForCompare={(prod) => {
+                setSelectedProduct(prod);
+                setCurrentPage('platform-comparison');
+              }}
+            />
+          )}
 
-      {/* Product Buying & Checkout Flow Modal */}
-      <BuyProductModal
-        isOpen={!!buyingProduct}
-        onClose={() => {
-          setBuyingProduct(null);
-          setBuyingPlatform(undefined);
-        }}
-        product={buyingProduct}
-        initialPlatform={buyingPlatform}
-        onOrderPlaced={handleOrderPlaced}
-        onOpenReviewModal={(prodId) => {
-          setModalInitialProductId(prodId);
-          setIsSubmitModalOpen(true);
-        }}
-        onViewOrders={() => setIsOrdersModalOpen(true)}
-      />
+          {/* AI Review Module - Text ABSA */}
+          {currentPage === 'ai-text' && (
+            <AITextAnalysisView
+              onNavigate={handleNavigate}
+              onSaveReview={handleSaveReviewToFirestore}
+              userEmail="24bit015@stc.ac.in"
+              userName="Selvarani K"
+            />
+          )}
 
-      {/* My Orders & Tracking Drawer Modal */}
-      <MyOrdersModal
-        isOpen={isOrdersModalOpen}
-        onClose={() => setIsOrdersModalOpen(false)}
-        orders={orders}
-        onOpenReviewModal={(prodId) => {
-          setModalInitialProductId(prodId);
-          setIsSubmitModalOpen(true);
-        }}
-        onBuyAgain={handleBuyAgain}
-      />
+          {/* AI Review Module - Voice Recording & Waveform */}
+          {currentPage === 'ai-voice' && (
+            <AIVoiceAnalysisView
+              onNavigate={handleNavigate}
+              onSaveReview={handleSaveReviewToFirestore}
+              userName="Selvarani K"
+              userEmail="24bit015@stc.ac.in"
+            />
+          )}
+
+          {/* AI Review Module - Image OCR & Receipt Scanner */}
+          {currentPage === 'ai-image' && (
+            <AIImageAnalysisView
+              onNavigate={handleNavigate}
+              onSaveReview={handleSaveReviewToFirestore}
+              userName="Selvarani K"
+              userEmail="24bit015@stc.ac.in"
+            />
+          )}
+
+          {/* Cross-Platform Comparison Module */}
+          {currentPage === 'platform-comparison' && (
+            <PlatformComparisonView
+              products={products}
+              selectedProduct={selectedProduct}
+              onNavigate={handleNavigate}
+              onAddToCart={handleAddToCart}
+            />
+          )}
+
+          {/* Cart Module */}
+          {currentPage === 'cart' && (
+            <CartPageView
+              items={cart}
+              onUpdateQuantity={handleUpdateCartQuantity}
+              onRemoveItem={handleRemoveCartItem}
+              onNavigate={handleNavigate}
+              onClearCart={handleClearCart}
+            />
+          )}
+
+          {/* User Profile / Wishlist Module */}
+          {currentPage === 'profile' && (
+            <UserProfilePageView
+              onNavigate={handleNavigate}
+              onLogout={() => {
+                showToast('Logged out');
+                setCurrentPage('home');
+              }}
+            />
+          )}
+
+          {/* Store Admin Console Module */}
+          {currentPage === 'admin' && (
+            <AdminPanelView
+              products={products}
+              onNavigate={handleNavigate}
+              onAddProduct={handleAddProduct}
+              onDeleteProduct={handleDeleteProduct}
+            />
+          )}
+        </main>
+
+        {/* Global Footer */}
+        <Footer onNavigate={handleNavigate} />
+      </div>
     </div>
   );
 }
-
 export default App;

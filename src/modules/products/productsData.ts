@@ -2,8 +2,360 @@ import { Product } from '../../types';
 import kurtiProductImg from '../../assets/images/kurti_product_image_1788865143302.jpg';
 import shirtProductImg from '../../assets/images/shirt_product_image_1788865161902.jpg';
 import ethnicKurtiImg from '../../assets/images/ethnic_kurti_image_1788865173700.jpg';
+import boatEarbudsImg from '../../assets/images/flash_boat_earbuds_1790846893387.jpg';
+import snitchShirtImg from '../../assets/images/flash_snitch_shirt_1790846905888.jpg';
+import minimalistSerumImg from '../../assets/images/flash_minimalist_serum_1790846918590.jpg';
+import noiseWatchImg from '../../assets/images/flash_noise_smartwatch_1790846933118.jpg';
 
 export const ALL_PRODUCTS: Product[] = [
+  {
+    "id": "prod-boat-nirvana-01",
+    "title": "boAt Nirvana Ion ANC True Wireless Earbuds (120H Playtime)",
+    "brand": "boAt",
+    "category": "Audio",
+    "price": 2499,
+    "originalPrice": 7990,
+    "rating": 4.8,
+    "reviewCount": 14250,
+    "image": boatEarbudsImg,
+    "description": "Premium quad mic ENx technology, 32dB active noise cancellation, Crystal Bionic Sound powered by HiFi DSP, and massive 120-hour battery life. A trending flagship across Amazon, Flipkart & Myntra.",
+    "platforms": {
+      "Amazon": {
+        "rating": 4.8,
+        "reviewCount": 8500,
+        "sentimentScore": 92,
+        "price": 2499,
+        "deliverySpeed": "1 Day Prime",
+        "authenticityRating": 99
+      },
+      "Myntra": {
+        "rating": 4.7,
+        "reviewCount": 3200,
+        "sentimentScore": 89,
+        "price": 2699,
+        "deliverySpeed": "2 Days",
+        "authenticityRating": 98
+      },
+      "Nykaa": {
+        "rating": 4.6,
+        "reviewCount": 1100,
+        "sentimentScore": 87,
+        "price": 2799,
+        "deliverySpeed": "2-3 Days",
+        "authenticityRating": 97
+      },
+      "Meesho": {
+        "rating": 4.3,
+        "reviewCount": 950,
+        "sentimentScore": 79,
+        "price": 2399,
+        "deliverySpeed": "4-5 Days",
+        "authenticityRating": 90
+      },
+      "Snapdeal": {
+        "rating": 4.2,
+        "reviewCount": 500,
+        "sentimentScore": 74,
+        "price": 2449,
+        "deliverySpeed": "3-4 Days",
+        "authenticityRating": 89
+      }
+    },
+    "aiSummary": {
+      "pros": [
+        "Extraordinary 120-hour total battery reserve with quick-charge case",
+        "Punchy dual-EQ bass response and clear vocal separation for podcasts",
+        "Effective 32dB active noise cancellation dampening commuter chatter"
+      ],
+      "cons": [
+        "Case size is slightly bulkier than ultra-compact pocket alternatives",
+        "Touch sensors are sensitive to accidental adjustments while running"
+      ],
+      "sentimentBreakdown": {
+        "positive": 91,
+        "neutral": 6,
+        "negative": 3
+      },
+      "verdict": "Unbeatable battery endurance and class-leading ANC performance at an aggressive sub-3k price point, making it a top Flash recommendation.",
+      "aspects": [
+        {
+          "aspect": "Battery Life & Case Reserve",
+          "sentiment": "Positive",
+          "score": 98
+        },
+        {
+          "aspect": "Noise Cancellation (ANC)",
+          "sentiment": "Positive",
+          "score": 91
+        },
+        {
+          "aspect": "Bass & Soundstaging",
+          "sentiment": "Positive",
+          "score": 94
+        },
+        {
+          "aspect": "Build & Case Finish",
+          "sentiment": "Positive",
+          "score": 90
+        }
+      ]
+    }
+  },
+  {
+    "id": "prod-snitch-shirt-01",
+    "title": "Snitch Men Cuban Collar Textured Resort Casual Shirt",
+    "brand": "Snitch",
+    "category": "Apparel",
+    "price": 1299,
+    "originalPrice": 2499,
+    "rating": 4.7,
+    "reviewCount": 8940,
+    "image": snitchShirtImg,
+    "description": "Ultra-popular D2C streetwear textured waffle-knit resort shirt with relaxed Cuban open collar, lightweight cotton-blend fabric, and contemporary relaxed silhouette.",
+    "platforms": {
+      "Myntra": {
+        "rating": 4.8,
+        "reviewCount": 4600,
+        "sentimentScore": 90,
+        "price": 1299,
+        "deliverySpeed": "1-2 Days",
+        "authenticityRating": 100
+      },
+      "Amazon": {
+        "rating": 4.6,
+        "reviewCount": 2900,
+        "sentimentScore": 86,
+        "price": 1349,
+        "deliverySpeed": "2 Days",
+        "authenticityRating": 98
+      },
+      "Nykaa": {
+        "rating": 4.7,
+        "reviewCount": 980,
+        "sentimentScore": 88,
+        "price": 1299,
+        "deliverySpeed": "2-3 Days",
+        "authenticityRating": 99
+      },
+      "Meesho": {
+        "rating": 4.2,
+        "reviewCount": 460,
+        "sentimentScore": 73,
+        "price": 1149,
+        "deliverySpeed": "4-5 Days",
+        "authenticityRating": 88
+      }
+    },
+    "aiSummary": {
+      "pros": [
+        "Airy textured waffle weave prevents fabric from clinging during summer",
+        "Modern relaxed shoulder drop that looks elevated without tailoring",
+        "Rich olive earthy hue that resists fading across multiple washes"
+      ],
+      "cons": [
+        "Slightly boxy fit for very slender builds; check size chart",
+        "Gentle cycle recommended to avoid snagging the textured waffle yarn"
+      ],
+      "sentimentBreakdown": {
+        "positive": 89,
+        "neutral": 7,
+        "negative": 4
+      },
+      "verdict": "The signature D2C modern streetwear shirt with exceptional styling versatility and breathable textured fabric.",
+      "aspects": [
+        {
+          "aspect": "Fabric Texture & Airflow",
+          "sentiment": "Positive",
+          "score": 96
+        },
+        {
+          "aspect": "Collar & Silhouette",
+          "sentiment": "Positive",
+          "score": 94
+        },
+        {
+          "aspect": "Color Richness",
+          "sentiment": "Positive",
+          "score": 92
+        },
+        {
+          "aspect": "Fit Consistency",
+          "sentiment": "Positive",
+          "score": 91
+        }
+      ]
+    }
+  },
+  {
+    "id": "prod-minimalist-serum-01",
+    "title": "Minimalist 10% Niacinamide Face Serum with Zinc (30ml)",
+    "brand": "Minimalist",
+    "category": "Beauty & Skincare",
+    "price": 569,
+    "originalPrice": 599,
+    "rating": 4.9,
+    "reviewCount": 28400,
+    "image": minimalistSerumImg,
+    "description": "Clinically proven serum with pure Vitamin B3 (Niacinamide) and Zinc PCA to visibly reduce sebum, acne marks, and uneven skin texture. A staple on Nykaa, Amazon, and Myntra.",
+    "platforms": {
+      "Nykaa": {
+        "rating": 4.9,
+        "reviewCount": 16200,
+        "sentimentScore": 96,
+        "price": 569,
+        "deliverySpeed": "1-2 Days",
+        "authenticityRating": 100
+      },
+      "Amazon": {
+        "rating": 4.8,
+        "reviewCount": 9800,
+        "sentimentScore": 93,
+        "price": 569,
+        "deliverySpeed": "Same Day / Next Day",
+        "authenticityRating": 99
+      },
+      "Myntra": {
+        "rating": 4.8,
+        "reviewCount": 1900,
+        "sentimentScore": 91,
+        "price": 599,
+        "deliverySpeed": "2 Days",
+        "authenticityRating": 99
+      },
+      "Meesho": {
+        "rating": 4.4,
+        "reviewCount": 500,
+        "sentimentScore": 77,
+        "price": 529,
+        "deliverySpeed": "4 Days",
+        "authenticityRating": 91
+      }
+    },
+    "aiSummary": {
+      "pros": [
+        "Lightweight, non-sticky water-based formulation absorbing within 15 seconds",
+        "Notable reduction in facial oiliness and redness after 14 days of routine use",
+        "Fragrance-free, non-comedogenic, and suited for sensitive and acne-prone skin"
+      ],
+      "cons": [
+        "10% concentration may require patch testing for first-time active ingredient users",
+        "Glass dropper bottle requires careful travel handling"
+      ],
+      "sentimentBreakdown": {
+        "positive": 95,
+        "neutral": 3,
+        "negative": 2
+      },
+      "verdict": "Gold-standard skincare active with unmatched customer satisfaction scores, zero gimmicks, and high cross-marketplace authenticity.",
+      "aspects": [
+        {
+          "aspect": "Texture & Absorption",
+          "sentiment": "Positive",
+          "score": 98
+        },
+        {
+          "aspect": "Acne & Sebum Control",
+          "sentiment": "Positive",
+          "score": 96
+        },
+        {
+          "aspect": "Skin Tolerance",
+          "sentiment": "Positive",
+          "score": 95
+        },
+        {
+          "aspect": "Value for Money",
+          "sentiment": "Positive",
+          "score": 97
+        }
+      ]
+    }
+  },
+  {
+    "id": "prod-noise-watch-01",
+    "title": "Noise ColorFit Pro 5 Smart Watch (1.85\" AMOLED, BT Calling)",
+    "brand": "Noise",
+    "category": "Electronics",
+    "price": 3499,
+    "originalPrice": 8999,
+    "rating": 4.6,
+    "reviewCount": 12800,
+    "image": noiseWatchImg,
+    "description": "Post-modern smartwatch with 1.85-inch vibrant AMOLED display, single-chip TruSync Bluetooth calling, emergency SOS, 100+ sports tracking modes, and 7-day battery endurance.",
+    "platforms": {
+      "Amazon": {
+        "rating": 4.6,
+        "reviewCount": 8200,
+        "sentimentScore": 87,
+        "price": 3499,
+        "deliverySpeed": "1-2 Days",
+        "authenticityRating": 99
+      },
+      "Myntra": {
+        "rating": 4.7,
+        "reviewCount": 3100,
+        "sentimentScore": 88,
+        "price": 3599,
+        "deliverySpeed": "2 Days",
+        "authenticityRating": 98
+      },
+      "Nykaa": {
+        "rating": 4.5,
+        "reviewCount": 900,
+        "sentimentScore": 83,
+        "price": 3799,
+        "deliverySpeed": "2-3 Days",
+        "authenticityRating": 97
+      },
+      "Snapdeal": {
+        "rating": 4.2,
+        "reviewCount": 600,
+        "sentimentScore": 73,
+        "price": 3399,
+        "deliverySpeed": "4 Days",
+        "authenticityRating": 89
+      }
+    },
+    "aiSummary": {
+      "pros": [
+        "Vivid AMOLED screen with crisp sunlight legibility and smooth 60Hz UI response",
+        "Clear Bluetooth phone call audio via built-in speaker and noise-filtered mic",
+        "Reliable daily health tracking including heart rate, SpO2, and sleep stages"
+      ],
+      "cons": [
+        "Battery drops to ~3 days if Always-On Display (AOD) is constantly engaged",
+        "Accompanying mobile app has occasional sync latency after phone restarts"
+      ],
+      "sentimentBreakdown": {
+        "positive": 87,
+        "neutral": 8,
+        "negative": 5
+      },
+      "verdict": "Flagship AMOLED smartwatch experience at a fraction of premium wearable prices, ideal for active daily routines.",
+      "aspects": [
+        {
+          "aspect": "AMOLED Screen & Brightness",
+          "sentiment": "Positive",
+          "score": 96
+        },
+        {
+          "aspect": "Bluetooth Call Clarity",
+          "sentiment": "Positive",
+          "score": 90
+        },
+        {
+          "aspect": "Battery Life",
+          "sentiment": "Positive",
+          "score": 88
+        },
+        {
+          "aspect": "Fitness Tracking Accuracy",
+          "sentiment": "Positive",
+          "score": 89
+        }
+      ]
+    }
+  },
   {
     "id": "prod-kurti-01",
     "title": "Biba Women Embroidered Pure Cotton Straight Kurti",

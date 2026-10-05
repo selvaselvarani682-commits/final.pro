@@ -5,8 +5,9 @@ import {
   MessageSquarePlus,
   Menu,
   X,
+  Zap,
+  Flame,
   Package,
-  ShoppingBag,
 } from 'lucide-react';
 
 export type EnterpriseNavSection =
@@ -24,6 +25,10 @@ interface EnterpriseNavbarProps {
   onFocusSearch: () => void;
   orderCount?: number;
   onOpenOrders?: () => void;
+  coins?: number;
+  onOpenPerks?: () => void;
+  viewMode?: 'all' | 'single';
+  onToggleViewMode?: () => void;
 }
 
 export const EnterpriseNavbar: React.FC<EnterpriseNavbarProps> = ({
@@ -34,15 +39,17 @@ export const EnterpriseNavbar: React.FC<EnterpriseNavbarProps> = ({
   onFocusSearch,
   orderCount = 0,
   onOpenOrders,
+  coins = 350,
+  onOpenPerks,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navItems: { id: EnterpriseNavSection; label: string }[] = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'products', label: 'Products' },
-    { id: 'review-search', label: 'Multimodal Search' },
-    { id: 'open-reviews', label: 'Open Reviews' },
-    { id: 'comparator', label: 'Compare Products' },
+  const navItems: { id: EnterpriseNavSection; label: string; moduleNum: string }[] = [
+    { id: 'overview', label: 'Home', moduleNum: 'P1' },
+    { id: 'products', label: 'Products', moduleNum: 'P2' },
+    { id: 'review-search', label: 'Search AI', moduleNum: 'P3' },
+    { id: 'open-reviews', label: 'Reviews', moduleNum: 'P4' },
+    { id: 'comparator', label: 'Price Match', moduleNum: 'P5' },
   ];
 
   const handleNavClick = (section: EnterpriseNavSection) => {
@@ -51,20 +58,20 @@ export const EnterpriseNavbar: React.FC<EnterpriseNavbarProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-slate-950 border-b border-slate-800 shadow-md">
+    <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/90 shadow-xs">
       {/* Main Navigation Bar */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2">
         {/* Brand Logo */}
         <div
           id="app-brand-logo"
           onClick={() => handleNavClick('overview')}
-          className="cursor-pointer"
+          className="cursor-pointer shrink-0"
         >
-          <BrandLogo size="md" theme="dark" />
+          <BrandLogo size="md" theme="light" />
         </div>
 
-        {/* Desktop Links */}
-        <nav className="hidden lg:flex items-center gap-1 text-xs text-white">
+        {/* Desktop 5 Pages Navigation */}
+        <nav className="hidden md:flex items-center gap-1 text-xs">
           {navItems.map((item) => {
             const isActive = activeSection === item.id;
             return (
@@ -72,49 +79,64 @@ export const EnterpriseNavbar: React.FC<EnterpriseNavbarProps> = ({
                 key={item.id}
                 id={`nav-${item.id}`}
                 onClick={() => handleNavClick(item.id)}
-                className={`px-3 py-2 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-xs font-bold whitespace-nowrap min-h-[36px] ${
                   isActive
-                    ? 'text-white bg-slate-800 font-bold ring-1 ring-slate-700 shadow-xs'
-                    : 'text-white hover:text-white hover:bg-slate-800/70 font-semibold'
+                    ? 'text-slate-900 bg-slate-100 ring-1 ring-slate-300 shadow-2xs font-extrabold'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
                 }`}
               >
-                <span className="font-semibold text-white tracking-normal">{item.label}</span>
+                <span>{item.label}</span>
               </button>
             );
           })}
         </nav>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           {/* Quick Search Button */}
           <button
             id="nav-quick-search-btn"
             onClick={onFocusSearch}
-            className="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-            title="Search reviews"
-            aria-label="Search reviews"
+            className="p-2 sm:p-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
+            title="Search reviews & products"
+            aria-label="Search reviews & products"
           >
             <Search className="w-4 h-4" />
           </button>
 
-          {/* Unique My Orders / Purchases Button */}
+          {/* Flash Perks Trigger (Coins & Streak) */}
+          {onOpenPerks && (
+            <button
+              onClick={onOpenPerks}
+              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100/90 hover:bg-slate-200/80 border border-slate-200 text-slate-800 text-xs font-bold transition-all cursor-pointer min-h-[38px] shadow-2xs"
+              title="View Flash Perks & Rewards"
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+              <span className="font-mono font-black text-slate-900">{coins}</span>
+              <span className="text-[10px] text-slate-500 uppercase font-sans">Coins</span>
+              <span className="text-slate-300">|</span>
+              <span className="text-[11px] text-amber-600 font-bold flex items-center gap-0.5">
+                <Flame className="w-3 h-3 fill-amber-500 text-amber-500" /> 4d
+              </span>
+            </button>
+          )}
+
+          {/* Orders Button (Changed from Flash Box into Order Button as requested) */}
           {onOpenOrders && (
             <button
               id="nav-orders-btn"
               onClick={onOpenOrders}
-              className="group relative flex items-center gap-2 px-3 sm:px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-600 border border-emerald-400/40 shadow-sm hover:shadow-emerald-900/30 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-              title="Track Orders, Deliveries & Receipts"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 border border-slate-900 shadow-sm hover:shadow-md transition-all cursor-pointer min-h-[44px]"
+              title="Track Orders, Deliveries & Packages"
             >
-              <span className="relative flex items-center justify-center w-5 h-5 rounded-lg bg-emerald-950/30 border border-emerald-300/30 group-hover:bg-emerald-950/40 transition-colors">
-                <ShoppingBag className="w-3.5 h-3.5 text-emerald-100 group-hover:rotate-6 transition-transform duration-200" />
-              </span>
-              <span className="tracking-wide">My Orders</span>
+              <Package className="w-4 h-4 text-[#E2F952]" />
+              <span className="font-extrabold tracking-wide">Orders</span>
               {orderCount > 0 ? (
-                <span className="inline-flex items-center justify-center min-w-[20px] h-[20px] px-1.5 text-[10px] font-black font-mono text-emerald-950 bg-amber-300 rounded-full shadow-xs ring-1 ring-amber-400/50 animate-pulse">
+                <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-black font-mono text-black bg-[#E2F952] rounded-full shadow-2xs">
                   {orderCount}
                 </span>
               ) : (
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-300"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#E2F952]" />
               )}
             </button>
           )}
@@ -123,18 +145,18 @@ export const EnterpriseNavbar: React.FC<EnterpriseNavbarProps> = ({
           <button
             id="nav-submit-review-btn"
             onClick={onOpenSubmitModal}
-            className="px-3.5 py-2 rounded-xl text-xs font-bold bg-[#FCA92B] text-slate-950 hover:bg-amber-400 transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+            className="px-3 sm:px-3.5 py-2 rounded-xl text-xs font-extrabold bg-[#E2F952] text-slate-950 hover:bg-[#d6f03d] border border-black/10 shadow-xs hover:shadow-sm transition-all cursor-pointer flex items-center gap-1.5 min-h-[44px]"
           >
-            <MessageSquarePlus className="w-3.5 h-3.5 text-slate-950" />
-            <span className="hidden sm:inline">Submit Review</span>
-            <span className="sm:hidden">Submit</span>
+            <MessageSquarePlus className="w-3.5 h-3.5 text-black" />
+            <span className="hidden sm:inline">Write Review</span>
+            <span className="sm:hidden">+ Review</span>
           </button>
 
           {/* Mobile Menu Trigger */}
           <button
             id="mobile-menu-toggle"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-lg text-slate-200 hover:text-white hover:bg-slate-800 lg:hidden cursor-pointer"
+            className="p-2 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 md:hidden cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
             aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? (
@@ -148,56 +170,66 @@ export const EnterpriseNavbar: React.FC<EnterpriseNavbarProps> = ({
 
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-slate-800 bg-slate-950 px-4 py-3 space-y-1 shadow-2xl">
-          {onOpenOrders && (
-            <div className="pb-2 mb-2 border-b border-slate-800">
-              <button
-                id="mobile-nav-orders-btn"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onOpenOrders();
-                }}
-                className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 border border-emerald-400/30 cursor-pointer shadow-sm"
-              >
-                <div className="flex items-center gap-2">
-                  <ShoppingBag className="w-4 h-4 text-emerald-200" />
-                  <span>My Orders & Shipments</span>
-                </div>
-                <span className="px-2 py-0.5 rounded-full bg-amber-300 text-slate-950 text-[10px] font-black font-mono">
-                  {orderCount} {orderCount === 1 ? 'order' : 'orders'}
-                </span>
-              </button>
-            </div>
-          )}
-          {navItems.map((item) => {
-            const isActive = activeSection === item.id;
-            return (
-              <button
-                key={item.id}
-                id={`mobile-nav-${item.id}`}
-                onClick={() => handleNavClick(item.id)}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs cursor-pointer transition-colors ${
-                  isActive
-                    ? 'bg-slate-800 text-white font-bold ring-1 ring-slate-700'
-                    : 'text-white hover:bg-slate-900 font-semibold'
-                }`}
-              >
-                <span className="text-white font-semibold">{item.label}</span>
-              </button>
-            );
-          })}
-
-          <div className="pt-2 border-t border-slate-800 mt-2">
+        <div className="md:hidden border-t border-slate-200 bg-white/95 px-4 py-3 space-y-2 shadow-xl backdrop-blur-md">
+          {/* Mobile Flash Perks */}
+          {onOpenPerks && (
             <button
               onClick={() => {
                 setMobileMenuOpen(false);
-                onOpenSubmitModal();
+                onOpenPerks();
               }}
-              className="w-full py-2.5 rounded-xl text-xs font-bold bg-[#FCA92B] text-slate-950 hover:bg-amber-400 flex items-center justify-center gap-1.5 cursor-pointer"
+              className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-100 border border-slate-200 text-slate-900 text-xs font-bold cursor-pointer min-h-[44px]"
             >
-              <MessageSquarePlus className="w-4 h-4 text-slate-950" />
-              <span>Submit New Customer Review</span>
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
+                <span>Flash Perks & Coins</span>
+              </div>
+              <span className="font-mono text-slate-900 font-extrabold">{coins} Coins ⚡</span>
             </button>
+          )}
+
+          {/* Mobile Orders Button */}
+          {onOpenOrders && (
+            <button
+              id="mobile-nav-orders-btn"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                onOpenOrders();
+              }}
+              className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-900 text-white text-xs font-bold cursor-pointer min-h-[44px] shadow-sm"
+            >
+              <div className="flex items-center gap-2">
+                <Package className="w-4 h-4 text-[#E2F952]" />
+                <span>Orders & Deliveries</span>
+              </div>
+              <span className="font-mono bg-[#E2F952] text-black font-extrabold px-2 py-0.5 rounded-full text-[10px]">
+                {orderCount} Orders
+              </span>
+            </button>
+          )}
+
+          {/* Navigation Links for Mobile */}
+          <div className="pt-2 space-y-1">
+            <div className="text-[10px] font-mono uppercase text-slate-500 px-3 py-1 font-bold">
+              Navigate Pages (5 Pages Live)
+            </div>
+            {navItems.map((item) => {
+              const isActive = activeSection === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleNavClick(item.id)}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold cursor-pointer min-h-[42px] transition-colors ${
+                    isActive
+                      ? 'bg-slate-900 text-[#E2F952]'
+                      : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                  }`}
+                >
+                  <span>{item.label}</span>
+                  <span className="text-[10px] font-mono opacity-70">{item.moduleNum}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}

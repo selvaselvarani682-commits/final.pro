@@ -31,11 +31,15 @@ export const DatabaseFeedView: React.FC<DatabaseFeedViewProps> = ({
 
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [reviewToDelete, setReviewToDelete] = useState<{ id: string; productTitle: string } | null>(null);
 
   const handleDelete = (id: string, productTitle: string) => {
-    if (!window.confirm(`Delete review for "${productTitle}"?`)) {
-      return;
-    }
+    setReviewToDelete({ id, productTitle });
+  };
+
+  const confirmDelete = () => {
+    if (!reviewToDelete) return;
+    const { id } = reviewToDelete;
     setDeletingId(id);
     try {
       deleteReviewFromStorage(id);
@@ -44,6 +48,7 @@ export const DatabaseFeedView: React.FC<DatabaseFeedViewProps> = ({
       setTimeout(() => setActionSuccess(null), 3000);
     } finally {
       setDeletingId(null);
+      setReviewToDelete(null);
     }
   };
 
@@ -260,6 +265,33 @@ export const DatabaseFeedView: React.FC<DatabaseFeedViewProps> = ({
           >
             Submit a review
           </button>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {reviewToDelete && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <h3 className="text-base font-bold text-slate-900">Delete Review?</h3>
+            <p className="text-xs text-slate-600">
+              Are you sure you want to remove the review for{' '}
+              <span className="font-semibold text-slate-800">"{reviewToDelete.productTitle}"</span>?
+            </p>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                onClick={() => setReviewToDelete(null)}
+                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 text-white hover:bg-rose-700 transition-colors shadow-xs cursor-pointer"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

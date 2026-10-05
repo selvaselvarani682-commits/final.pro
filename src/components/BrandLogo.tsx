@@ -1,4 +1,5 @@
 import React from 'react';
+import { Zap } from 'lucide-react';
 
 interface BrandLogoProps {
   size?: 'sm' | 'md' | 'lg';
@@ -10,38 +11,49 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   theme = 'light',
 }) => {
   const iconSizes = {
-    sm: 'w-7 h-7',
+    sm: 'w-6 h-6',
     md: 'w-8 h-8',
     lg: 'w-10 h-10',
   };
 
-  const titleSizes = {
-    sm: 'text-sm',
-    md: 'text-base',
-    lg: 'text-xl',
+  const zapSizes = {
+    sm: 'w-3.5 h-3.5',
+    md: 'w-4 h-4',
+    lg: 'w-5 h-5',
   };
 
+  const titleSizes = {
+    sm: 'text-base',
+    md: 'text-lg',
+    lg: 'text-2xl',
+  };
+
+  const isDark = theme === 'dark';
+
   return (
-    <div className="flex items-center gap-2.5 select-none">
-      {/* Signature Icon: Tri-color accent block */}
+    <div className="flex items-center gap-2.5 select-none group cursor-pointer">
+      {/* Flash.co signature electric neon lightning badge */}
       <div
-        className={`${iconSizes[size]} rounded-xl bg-slate-900 text-white flex items-center justify-center p-1.5 relative overflow-hidden shadow-xs border border-slate-800`}
+        className={`${iconSizes[size]} rounded-xl bg-[#E2F952] text-black flex items-center justify-center relative overflow-hidden shadow-[0_0_16px_rgba(226,249,82,0.45)] group-hover:scale-105 transition-transform duration-200 shrink-0 border border-black/10`}
       >
-        {/* Abstract 3-line diagonal brand bars in yellow, blue, green */}
-        <div className="absolute inset-0 flex items-center justify-center gap-0.5 opacity-90">
-          <div className="w-1 h-5 bg-[#FCA92B] rounded-full rotate-12 transform translate-x-[-2px]" />
-          <div className="w-1 h-6 bg-[#3B7FE9] rounded-full rotate-12 transform" />
-          <div className="w-1 h-5 bg-[#36C174] rounded-full rotate-12 transform translate-x-[2px]" />
-        </div>
+        <Zap className={`${zapSizes[size]} fill-black text-black stroke-[2.5]`} />
       </div>
 
-      <div className="flex items-center">
+      <div className="flex items-baseline tracking-tight">
         <span
-          className={`font-extrabold tracking-tight ${
-            theme === 'dark' ? 'text-white' : 'text-slate-900'
-          } ${titleSizes[size]} font-heading leading-tight`}
+          className={`font-black font-heading ${titleSizes[size]} ${
+            isDark ? 'text-white' : 'text-slate-900'
+          } tracking-tight`}
         >
-          Review Analysis
+          flash
+        </span>
+        <span className="text-[#96b800] sm:text-[#88a800] font-black font-heading text-lg leading-none">.</span>
+        <span
+          className={`font-bold text-xs uppercase tracking-wider ml-1 ${
+            isDark ? 'text-slate-400' : 'text-slate-600'
+          }`}
+        >
+          reviews
         </span>
       </div>
     </div>

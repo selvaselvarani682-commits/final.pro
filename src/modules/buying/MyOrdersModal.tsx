@@ -9,12 +9,14 @@ import {
   Clock,
   ExternalLink,
   Star,
-  ChevronRight,
   ShoppingBag,
   RotateCcw,
   MapPin,
   Calendar,
-  AlertCircle,
+  Zap,
+  Mail,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 interface MyOrdersModalProps {
@@ -35,6 +37,7 @@ export const MyOrdersModal: React.FC<MyOrdersModalProps> = ({
   if (!isOpen) return null;
 
   const [filter, setFilter] = useState<'all' | 'active' | 'delivered'>('all');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const filteredOrders = orders.filter((o) => {
     if (filter === 'active') return o.status !== 'Delivered';
@@ -42,30 +45,39 @@ export const MyOrdersModal: React.FC<MyOrdersModalProps> = ({
     return true;
   });
 
+  const handleCopyTracking = (orderId: string, trackingNumber?: string) => {
+    const textToCopy = trackingNumber || orderId;
+    navigator.clipboard.writeText(textToCopy);
+    setCopiedId(orderId);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   return (
     <div
       id="my-orders-modal-backdrop"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-xs overflow-y-auto animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm overflow-y-auto animate-fadeIn"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden my-4 relative">
-        {/* Top Bar */}
-        <div className="bg-slate-900 text-white px-5 sm:px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-emerald-600/30 border border-emerald-400/40 flex items-center justify-center text-emerald-400">
-              <Package className="w-4 h-4" />
+      <div className="bg-[#10131A] text-white rounded-3xl border border-white/10 shadow-2xl max-w-2xl w-full overflow-hidden my-4 relative">
+        {/* Flash.co Shopping Inbox Top Header */}
+        <div className="bg-gradient-to-r from-[#151922] via-[#181D29] to-[#151922] px-6 py-5 border-b border-white/10 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-[#E2F952] text-black flex items-center justify-center font-black shadow-[0_0_15px_rgba(226,249,82,0.35)] shrink-0">
+              <Zap className="w-5 h-5 fill-black" />
             </div>
             <div>
-              <h3 className="text-sm font-bold flex items-center gap-2">
-                <span>My Product Orders & Delivery Tracking</span>
-                <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full">
-                  {orders.length} Order{orders.length === 1 ? '' : 's'}
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-black font-heading text-white">
+                  Flash Shopping Inbox
+                </h3>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#E2F952]/10 border border-[#E2F952]/30 text-[#E2F952] font-bold">
+                  24bit015@flash.co
                 </span>
-              </h3>
-              <p className="text-[11px] text-slate-400">
-                Track live shipments, view receipts, and review verified purchases
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Spam-free unified tracking across Amazon, Myntra, Nykaa & Meesho
               </p>
             </div>
           </div>
@@ -73,150 +85,200 @@ export const MyOrdersModal: React.FC<MyOrdersModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            aria-label="Close orders modal"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Filters */}
-        <div className="px-5 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center gap-2">
-          <span className="text-xs text-slate-500 font-medium">Filter:</span>
-          {(['all', 'active', 'delivered'] as const).map((f) => (
-            <button
-              key={f}
-              type="button"
-              onClick={() => setFilter(f)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize transition-all cursor-pointer ${
-                filter === f
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
-              }`}
-            >
-              {f === 'all' ? `All (${orders.length})` : f}
-            </button>
-          ))}
+        {/* Filters & Inbox Status */}
+        <div className="px-6 py-3 bg-black/40 border-b border-white/[0.06] flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            {(['all', 'active', 'delivered'] as const).map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setFilter(f)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold capitalize transition-all cursor-pointer ${
+                  filter === f
+                    ? 'bg-[#E2F952] text-black font-bold shadow-xs'
+                    : 'bg-white/[0.04] text-slate-400 hover:text-white border border-white/[0.06]'
+                }`}
+              >
+                {f === 'all' ? `All (${orders.length})` : f}
+              </button>
+            ))}
+          </div>
+
+          <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Sync Active</span>
+          </div>
         </div>
 
         {/* Orders List */}
-        <div className="p-4 sm:p-6 max-h-[68vh] overflow-y-auto space-y-4">
+        <div className="p-6 max-h-[60vh] overflow-y-auto space-y-4">
           {filteredOrders.length === 0 ? (
-            <div className="py-12 text-center space-y-3">
-              <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
-                <ShoppingBag className="w-6 h-6" />
+            <div className="text-center py-12 space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/10 mx-auto flex items-center justify-center text-slate-500">
+                <Package className="w-6 h-6" />
               </div>
-              <p className="text-xs text-slate-500">No orders found in this view.</p>
+              <h4 className="text-sm font-bold text-white">No Shipments Found</h4>
+              <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                Orders placed through Flash or synced from your e-commerce accounts will automatically appear here with real-time tracking.
+              </p>
             </div>
           ) : (
             filteredOrders.map((order) => {
               const isDelivered = order.status === 'Delivered';
-
               return (
                 <div
                   key={order.orderId}
-                  className="p-4 rounded-xl border border-slate-200 hover:border-slate-300 transition-all bg-white shadow-2xs space-y-3"
+                  className="p-5 rounded-2xl bg-[#141721] border border-white/10 hover:border-white/20 transition-all space-y-4"
                 >
-                  {/* Order header row */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100 text-xs">
+                  {/* Top line: Marketplace + Order ID + Flash Coins */}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-slate-900">
-                        {order.orderId}
-                      </span>
-                      <span className="text-slate-400">•</span>
-                      <span className="text-slate-500 flex items-center gap-1">
-                        <Calendar className="w-3 h-3 text-slate-400" />
-                        {order.date}
+                      <PlatformPill platform={order.platform} size="sm" />
+                      <span className="text-xs font-mono text-slate-400">
+                        #{order.orderId}
                       </span>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <PlatformPill platform={order.platform} size="sm" />
+                      <span className="px-2 py-0.5 rounded-full bg-[#E2F952]/10 border border-[#E2F952]/30 text-[#E2F952] text-[10px] font-bold font-mono flex items-center gap-1">
+                        <Zap className="w-2.5 h-2.5 fill-[#E2F952]" /> +75 Flash Coins
+                      </span>
+
                       <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold flex items-center gap-1 ${
                           isDelivered
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-indigo-100 text-indigo-800'
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                            : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
                         }`}
                       >
-                        {isDelivered ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
-                        {order.status}
+                        {isDelivered ? (
+                          <CheckCircle2 className="w-3 h-3" />
+                        ) : (
+                          <Truck className="w-3 h-3" />
+                        )}
+                        <span>{order.status}</span>
                       </span>
                     </div>
                   </div>
 
-                  {/* Product Details row */}
-                  <div className="flex items-start gap-3">
-                    <img
-                      src={order.productImage}
-                      alt={order.productTitle}
-                      className="w-16 h-16 object-cover rounded-lg border border-slate-200 shrink-0"
-                    />
+                  {/* Product Details */}
+                  <div className="flex items-center gap-3.5">
+                    {order.productImage ? (
+                      <img
+                        src={order.productImage}
+                        alt={order.productTitle}
+                        referrerPolicy="no-referrer"
+                        className="w-14 h-14 rounded-xl object-cover bg-black/40 border border-white/10 shrink-0"
+                      />
+                    ) : (
+                      <div className="w-14 h-14 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center text-slate-500 shrink-0">
+                        <Package className="w-6 h-6" />
+                      </div>
+                    )}
 
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <span className="text-[10px] font-bold text-indigo-700 uppercase">
-                        {order.brand}
-                      </span>
-                      <h4 className="text-xs sm:text-sm font-bold text-slate-900 line-clamp-1">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-bold text-white truncate">
                         {order.productTitle}
                       </h4>
-                      <p className="text-[11px] text-slate-500">
-                        {order.variant} • Qty: {order.quantity}
-                      </p>
-
-                      <div className="flex items-center gap-3 pt-0.5">
-                        <span className="text-xs font-bold font-mono text-emerald-700">
+                      <div className="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
+                        <span className="font-mono text-white font-bold">
                           ₹{order.totalPrice.toLocaleString('en-IN')}
                         </span>
-                        <span className="text-[10px] text-slate-400">
-                          via {order.paymentMethod.toUpperCase()} ({order.paymentStatus})
-                        </span>
+                        <span>·</span>
+                        <span>Qty: {order.quantity || 1}</span>
+                        {order.estimatedDelivery && (
+                          <>
+                            <span>·</span>
+                            <span className="text-[#E2F952]">ETA: {order.estimatedDelivery}</span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
 
-                  {/* Shipping info strip */}
-                  <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100 text-xs flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 text-slate-600">
-                      <Truck className="w-3.5 h-3.5 text-slate-400" />
-                      <span className="font-medium text-[11px]">
-                        {isDelivered ? 'Delivered' : 'ETA'}: {order.estimatedDelivery}
-                      </span>
-                    </div>
-
-                    <div className="text-[10px] font-mono text-slate-500">
-                      AWB: {order.trackingNumber}
+                  {/* Flash Delivery Steps Timeline */}
+                  <div className="pt-2 border-t border-white/[0.06]">
+                    <div className="grid grid-cols-4 gap-2 text-center text-[10px]">
+                      {[
+                        { label: 'Confirmed', done: true },
+                        { label: 'Shipped', done: true },
+                        {
+                          label: 'Out for Delivery',
+                          done: order.status === 'Out for Delivery' || isDelivered,
+                        },
+                        { label: 'Delivered', done: isDelivered },
+                      ].map((step) => (
+                        <div key={step.label} className="space-y-1">
+                          <div
+                            className={`h-1.5 rounded-full ${
+                              step.done ? 'bg-[#E2F952]' : 'bg-white/10'
+                            }`}
+                          />
+                          <span
+                            className={
+                              step.done ? 'text-white font-semibold' : 'text-slate-500'
+                            }
+                          >
+                            {step.label}
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
-                  {/* Order Actions */}
-                  <div className="flex items-center justify-end gap-2 pt-1">
-                    {onOpenReviewModal && (
+                  {/* Actions Row */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/[0.06]">
+                    <div className="text-xs text-slate-400 flex items-center gap-2">
+                      <span>Tracking:</span>
                       <button
                         type="button"
-                        onClick={() => {
-                          onClose();
-                          onOpenReviewModal(order.productId);
-                        }}
-                        className="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer border border-emerald-200"
+                        onClick={() =>
+                          handleCopyTracking(order.orderId, order.trackingNumber)
+                        }
+                        className="font-mono text-slate-300 hover:text-white flex items-center gap-1 cursor-pointer"
+                        title="Copy tracking code"
                       >
-                        <Star className="w-3.5 h-3.5 text-emerald-600 fill-emerald-600" />
-                        <span>Write a Review</span>
+                        <span>
+                          {order.trackingNumber || `FL-${order.orderId.slice(0, 8)}`}
+                        </span>
+                        {copiedId === order.orderId ? (
+                          <Check className="w-3 h-3 text-emerald-400" />
+                        ) : (
+                          <Copy className="w-3 h-3 text-slate-500" />
+                        )}
                       </button>
-                    )}
+                    </div>
 
-                    {onBuyAgain && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onClose();
-                          onBuyAgain(order);
-                        }}
-                        className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                        <span>Buy Again</span>
-                      </button>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {onBuyAgain && (
+                        <button
+                          type="button"
+                          onClick={() => onBuyAgain(order)}
+                          className="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-xs font-semibold text-white transition-colors cursor-pointer flex items-center gap-1"
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                          <span>Buy Again</span>
+                        </button>
+                      )}
+
+                      {onOpenReviewModal && (
+                        <button
+                          type="button"
+                          onClick={() => onOpenReviewModal(order.productId)}
+                          className="px-3.5 py-1.5 rounded-xl bg-[#E2F952] hover:bg-[#d6f03d] text-xs font-bold text-black transition-all cursor-pointer flex items-center gap-1 shadow-xs"
+                        >
+                          <Zap className="w-3 h-3 fill-black" />
+                          <span>Write Review (+50 ⚡)</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -224,12 +286,17 @@ export const MyOrdersModal: React.FC<MyOrdersModalProps> = ({
           )}
         </div>
 
-        {/* Footer */}
-        <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
+        {/* Footer info */}
+        <div className="px-6 py-4 bg-black/50 border-t border-white/10 text-xs text-slate-400 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#E2F952]" />
+            <span>Flash Smart Inbox protects your purchase privacy.</span>
+          </div>
+
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
+            className="text-white hover:underline cursor-pointer"
           >
             Close
           </button>

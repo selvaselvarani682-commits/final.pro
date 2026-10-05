@@ -103,7 +103,7 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
   };
 
   return (
-    <section id="products" className="py-12 bg-slate-50/70 border-y border-slate-200">
+    <section id="products" className="py-12 bg-white/40 backdrop-blur-[2px] border-y border-slate-200/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Quick Metrics Buttons with Unique Images */}
         <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-6">
@@ -114,19 +114,20 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
               setPricePreset('all');
               setSearchQuery('');
             }}
-            className="flex items-center gap-3 p-2 sm:p-2.5 pr-4 sm:pr-5 bg-white rounded-xl border border-slate-200 shadow-xs hover:shadow-sm hover:border-emerald-400 transition-all text-left group cursor-pointer"
+            className="flex items-center gap-3 p-2.5 sm:p-3 pr-4 sm:pr-5 bg-white/90 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 transition-all text-left group cursor-pointer"
           >
             <img
               src={productsTrackedImg}
               alt="Catalog Inventory"
               referrerPolicy="no-referrer"
-              className="w-11 h-11 sm:w-12 sm:h-12 rounded-lg object-cover border border-slate-100 group-hover:scale-105 transition-transform shrink-0"
+              className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl object-cover border border-slate-200 group-hover:scale-105 transition-transform shrink-0"
             />
             <div>
-              <div className="text-emerald-600 font-extrabold text-sm sm:text-base leading-tight">
-                Verified
+              <div className="text-slate-900 font-black text-sm sm:text-base leading-tight flex items-center gap-1">
+                <span>Verified</span>
+                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#E2F952] text-black font-extrabold border border-black/10">D2C</span>
               </div>
-              <div className="text-xs font-semibold text-slate-800 leading-tight mt-0.5">
+              <div className="text-xs font-bold text-slate-900 leading-tight mt-0.5">
                 Product Catalog
               </div>
               <div className="text-[10px] sm:text-[11px] text-slate-500 font-medium leading-tight mt-0.5">
@@ -140,19 +141,19 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
             onClick={() => {
               setSortBy('rating');
             }}
-            className="flex items-center gap-3 p-2 sm:p-2.5 pr-4 sm:pr-5 bg-white rounded-xl border border-slate-200 shadow-xs hover:shadow-sm hover:border-blue-400 transition-all text-left group cursor-pointer"
+            className="flex items-center gap-3 p-2.5 sm:p-3 pr-4 sm:pr-5 bg-white/90 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 transition-all text-left group cursor-pointer"
           >
             <img
               src={marketplacesSyncImg}
               alt="Synced Marketplaces"
               referrerPolicy="no-referrer"
-              className="w-11 h-11 sm:w-12 sm:h-12 rounded-lg object-cover border border-slate-100 group-hover:scale-105 transition-transform shrink-0"
+              className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl object-cover border border-slate-200 group-hover:scale-105 transition-transform shrink-0"
             />
             <div>
-              <div className="text-blue-600 font-extrabold text-sm sm:text-base leading-tight">
+              <div className="text-indigo-600 font-black text-sm sm:text-base leading-tight">
                 5 Platforms
               </div>
-              <div className="text-xs font-semibold text-slate-800 leading-tight mt-0.5">
+              <div className="text-xs font-bold text-slate-900 leading-tight mt-0.5">
                 Synced Marketplaces
               </div>
               <div className="text-[10px] sm:text-[11px] text-slate-500 font-medium leading-tight mt-0.5">
@@ -163,7 +164,7 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
         </div>
 
         {/* Filter & Controls Card */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-4 sm:p-5 mb-8 space-y-4">
+        <div className="bg-white/90 backdrop-blur-xl rounded-2xl border border-slate-200/90 shadow-sm p-4 sm:p-5 mb-8 space-y-4">
           {/* Top Bar: Search, Sort & View Mode */}
           <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
             {/* Search Input */}
@@ -174,12 +175,12 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
                 value={searchQuery}
                 onChange={handleSearchChange}
                 placeholder="Search across products or brands..."
-                className="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                className="w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-slate-800 transition-all"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -189,12 +190,12 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
             {/* Sort & View Mode */}
             <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
               <div className="flex items-center gap-1.5 text-xs text-slate-600">
-                <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
-                <span className="hidden sm:inline">Sort:</span>
+                <ArrowUpDown className="w-3.5 h-3.5 text-slate-500" />
+                <span className="hidden sm:inline font-medium">Sort:</span>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as any)}
-                  className="bg-slate-50 border border-slate-200 rounded-md text-xs py-1.5 px-2.5 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  className="bg-slate-50 border border-slate-300 rounded-xl text-xs py-2 px-3 text-slate-800 font-medium focus:outline-none focus:border-slate-800"
                 >
                   <option value="rating">Highest Rated ★</option>
                   <option value="reviews">Most Reviews</option>
@@ -205,13 +206,13 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
               </div>
 
               {/* View Toggle */}
-              <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+              <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-1.5 rounded-md text-xs font-medium transition-colors ${
+                  className={`p-1.5 rounded-lg text-xs font-medium transition-colors ${
                     viewMode === 'grid'
-                      ? 'bg-white text-slate-900 shadow-xs'
-                      : 'text-slate-500 hover:text-slate-800'
+                      ? 'bg-white text-slate-900 shadow-2xs font-bold'
+                      : 'text-slate-500 hover:text-slate-900'
                   }`}
                   title="Grid View"
                 >
@@ -219,10 +220,10 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
                 </button>
                 <button
                   onClick={() => setViewMode('table')}
-                  className={`p-1.5 rounded-md text-xs font-medium transition-colors ${
+                  className={`p-1.5 rounded-lg text-xs font-medium transition-colors ${
                     viewMode === 'table'
-                      ? 'bg-white text-slate-900 shadow-xs'
-                      : 'text-slate-500 hover:text-slate-800'
+                      ? 'bg-white text-slate-900 shadow-2xs font-bold'
+                      : 'text-slate-500 hover:text-slate-900'
                   }`}
                   title="Table View"
                 >
@@ -240,10 +241,10 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
                 <button
                   key={cat}
                   onClick={() => handleCategoryChange(cat)}
-                  className={`px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-colors ${
+                  className={`px-3.5 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all cursor-pointer ${
                     active
-                      ? 'bg-emerald-600 text-white shadow-xs'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                      ? 'bg-slate-900 text-[#E2F952] shadow-xs'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900'
                   }`}
                 >
                   {cat}
@@ -253,9 +254,9 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
           </div>
 
           {/* Price Range Presets */}
-          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 text-xs text-slate-600">
-            <span className="font-semibold text-slate-700 flex items-center gap-1">
-              <Tag className="w-3 h-3 text-slate-400" /> Price Tier:
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200 text-xs text-slate-600">
+            <span className="font-semibold text-slate-800 flex items-center gap-1">
+              <Tag className="w-3 h-3 text-indigo-600" /> Price Tier:
             </span>
             {[
               { id: 'all', label: 'All Budgets' },
@@ -270,10 +271,10 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
                   setPricePreset(tier.id as any);
                   setCurrentPage(1);
                 }}
-                className={`px-2.5 py-1 rounded-md transition-colors ${
+                className={`px-3 py-1 rounded-xl transition-all cursor-pointer font-medium ${
                   pricePreset === tier.id
-                    ? 'bg-slate-800 text-white font-medium'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ? 'bg-slate-900 text-[#E2F952] font-bold'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900'
                 }`}
               >
                 {tier.label}
@@ -288,10 +289,10 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
 
         {/* Product Cards Grid or Table */}
         {filteredProducts.length === 0 ? (
-          <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
-            <SlidersHorizontal className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-            <h3 className="text-base font-semibold text-slate-800">No products matched your criteria</h3>
-            <p className="text-sm text-slate-500 mt-1">
+          <div className="bg-[#12151E] rounded-2xl border border-white/10 p-12 text-center space-y-3">
+            <SlidersHorizontal className="w-10 h-10 text-slate-500 mx-auto mb-3" />
+            <h3 className="text-base font-bold text-white">No products matched your criteria</h3>
+            <p className="text-xs text-slate-500 mt-1">
               Try adjusting your search query, price tier, or category filter.
             </p>
             <button
@@ -300,13 +301,13 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
                 setSelectedCategory('All Categories');
                 setPricePreset('all');
               }}
-              className="mt-4 px-4 py-2 bg-emerald-600 text-white text-xs font-semibold rounded-lg hover:bg-emerald-700"
+              className="mt-4 px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800 cursor-pointer shadow-sm"
             >
               Reset Filters
             </button>
           </div>
         ) : viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
             {paginatedProducts.map((product) => {
               const discountPercent = Math.round(
                 ((product.originalPrice - product.price) / product.originalPrice) * 100
@@ -316,10 +317,10 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
               return (
                 <div
                   key={product.id}
-                  className="bg-white rounded-xl border border-slate-200 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between overflow-hidden group"
+                  className="bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-slate-300 transition-all flex flex-col justify-between overflow-hidden group"
                 >
                   {/* Card Image Container */}
-                  <div className="relative h-44 w-full bg-slate-100 overflow-hidden">
+                  <div className="relative h-48 w-full bg-slate-100 overflow-hidden">
                     <img
                       src={product.image}
                       alt={product.title}
@@ -327,17 +328,17 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
                       className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
                     />
-                    <div className="absolute top-2 left-2 flex flex-wrap gap-1">
-                      <span className="px-2 py-0.5 bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-semibold rounded-md">
+                    <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1">
+                      <span className="px-2 py-0.5 bg-slate-900/85 backdrop-blur-xs text-white text-[10px] font-bold rounded-lg shadow-2xs">
                         {product.brand}
                       </span>
                       {discountPercent > 10 && (
-                        <span className="px-1.5 py-0.5 bg-rose-600 text-white text-[10px] font-bold rounded-md">
+                        <span className="px-2 py-0.5 bg-[#E2F952] text-black text-[10px] font-black rounded-lg border border-black/10">
                           {discountPercent}% OFF
                         </span>
                       )}
                     </div>
-                    <span className="absolute bottom-2 right-2 px-2 py-0.5 bg-white/90 backdrop-blur-xs text-slate-700 text-[10px] font-medium rounded-md shadow-xs">
+                    <span className="absolute bottom-2.5 right-2.5 px-2 py-0.5 bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-medium rounded-lg">
                       {product.category}
                     </span>
                   </div>
@@ -355,13 +356,13 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
                       </span>
                     </div>
 
-                    <h3 className="text-sm font-semibold text-slate-900 line-clamp-2 mb-2 leading-snug group-hover:text-emerald-700 transition-colors">
+                    <h3 className="text-sm font-bold text-slate-900 line-clamp-2 mb-2 leading-snug group-hover:text-indigo-600 transition-colors">
                       {product.title}
                     </h3>
 
                     {/* Pricing */}
                     <div className="flex items-baseline gap-2 mb-3">
-                      <span className="text-lg font-bold text-slate-900 font-mono">
+                      <span className="text-lg font-black text-slate-900 font-mono">
                         ₹{product.price.toLocaleString('en-IN')}
                       </span>
                       {product.originalPrice > product.price && (
@@ -374,8 +375,8 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
                     {/* Top Aspect Tag */}
                     {topAspect && (
                       <div className="mt-auto pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                        <span className="text-slate-500 truncate">{topAspect.aspect}:</span>
-                        <span className="font-semibold text-emerald-600 font-mono">
+                        <span className="text-slate-600 truncate">{topAspect.aspect}:</span>
+                        <span className="font-bold text-emerald-600 font-mono">
                           {topAspect.score}% Pos
                         </span>
                       </div>
@@ -399,7 +400,7 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
                   <div className="px-4 pb-4 pt-1 flex items-center gap-2">
                     <button
                       onClick={() => setInspectingProduct(product)}
-                      className="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors text-center"
+                      className="py-2 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-colors text-center cursor-pointer min-h-[38px]"
                     >
                       Insights
                     </button>
@@ -407,7 +408,7 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
                       <button
                         onClick={() => onBuyProduct(product)}
                         title="Buy This Product"
-                        className="flex-1 py-1.5 px-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1 shadow-xs cursor-pointer"
+                        className="flex-1 py-2 px-2.5 bg-[#E2F952] hover:bg-[#d6f03d] text-slate-950 text-xs font-black rounded-xl transition-all flex items-center justify-center gap-1 border border-black/10 shadow-2xs cursor-pointer min-h-[38px]"
                       >
                         <ShoppingBag className="w-3.5 h-3.5" />
                         <span>Buy Now</span>
@@ -417,7 +418,7 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
                       <button
                         onClick={() => onSelectForCompare(product)}
                         title="Compare in Matrix"
-                        className="py-1.5 px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-lg transition-colors border border-emerald-200/60 cursor-pointer"
+                        className="py-2 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-colors border border-slate-200 cursor-pointer min-h-[38px]"
                       >
                         Compare
                       </button>
@@ -426,7 +427,7 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
                       <button
                         onClick={() => onSelectForReview(product)}
                         title="Review this product"
-                        className="p-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors cursor-pointer"
+                        className="p-2 bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-700 rounded-xl transition-colors cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center"
                       >
                         <Plus className="w-4 h-4" />
                       </button>
