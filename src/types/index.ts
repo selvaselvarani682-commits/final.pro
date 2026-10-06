@@ -13,7 +13,8 @@ export type StoryboardPage =
   | 'cart'
   | 'auth'
   | 'profile'
-  | 'admin';
+  | 'admin'
+  | 'admin-login';
 
 export interface AspectSentiment {
   aspect: string;

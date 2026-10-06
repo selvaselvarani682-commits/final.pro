@@ -40,6 +40,7 @@ export const ProductListingPageView: React.FC<ProductListingPageViewProps> = ({
     'Sports',
     'Books',
     'Toys',
+    'Groceries',
   ];
 
   const priceRanges = [
@@ -51,7 +52,10 @@ export const ProductListingPageView: React.FC<ProductListingPageViewProps> = ({
     { id: 'above10000', label: 'Above ₹10,000' },
   ];
 
-  const brands = ['Samsung', 'Apple', 'Nike', 'boAt', 'Nykaa', "Levi's", 'UrbanCraft'];
+  const brands = useMemo(() => {
+    const list = Array.from(new Set(products.map((p) => p.brand))).filter(Boolean);
+    return list.sort();
+  }, [products]);
 
   const toggleBrand = (brand: string) => {
     setSelectedBrands((prev) =>

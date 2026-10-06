@@ -254,6 +254,15 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                   TextBlob & NLTK Specs
                 </span>
               </li>
+              <li className="pt-1 border-t border-slate-800/80">
+                <button
+                  onClick={() => handleNav('admin-login')}
+                  className="hover:text-white text-slate-400 hover:text-indigo-300 transition-colors cursor-pointer text-left flex items-center gap-1.5 group"
+                >
+                  <Lock className="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-300 shrink-0" />
+                  <span className="group-hover:text-white">Admin Login</span>
+                </button>
+              </li>
             </ul>
           </div>
         </div>

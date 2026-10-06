@@ -29,6 +29,14 @@ service cloud.firestore {
       allow delete: if true;
     }
 
+    match /products/{productId} {
+      // Anyone can browse catalog products
+      allow read: if true;
+      
+      // Admin management for adding, updating, and removing products
+      allow create, update, delete: if true;
+    }
+
     match /test/{docId} {
       allow read, write: if true;
     }

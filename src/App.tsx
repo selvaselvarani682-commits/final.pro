@@ -12,19 +12,62 @@ import { PlatformComparisonView } from './pages/PlatformComparisonView';
 import { CartPageView } from './pages/CartPageView';
 import { UserProfilePageView } from './pages/UserProfilePageView';
 import { AdminPanelView } from './pages/AdminPanelView';
+import { AdminLoginPage } from './pages/AdminLoginPage';
+import {
+  getAdminToken,
+  getAdminUser,
+  verifyAdminSessionApi,
+  logoutAdminApi,
+  AdminUserSession,
+} from './services/adminAuthService';
 
 import { STORYBOARD_PRODUCTS } from './data/storyboardProducts';
 import { Product, CartItem, StoryboardPage } from './types';
 import { saveReviewToDatabase } from './services/reviewStorage';
+import {
+  getStoredProducts,
+  fetchProductsFromBackend,
+  addProductBackend,
+  updateProductBackend,
+  deleteProductBackend,
+} from './services/productStorage';
 import ecommerceBg from './assets/images/ecommerce_page_bg_1790847190923.jpg';
 import { CheckCircle2 } from 'lucide-react';
+import { useEffect } from 'react';
 
 export function App() {
   const [currentPage, setCurrentPage] = useState<StoryboardPage>('home');
-  const [products, setProducts] = useState<Product[]>(STORYBOARD_PRODUCTS);
-  const [selectedProduct, setSelectedProduct] = useState<Product>(STORYBOARD_PRODUCTS[0]);
+  const [products, setProducts] = useState<Product[]>(getStoredProducts());
+  const [selectedProduct, setSelectedProduct] = useState<Product>(products[0] || STORYBOARD_PRODUCTS[0]);
   const [selectedCategory, setSelectedCategory] = useState<string>('All Categories');
   const [searchQuery, setSearchQuery] = useState<string>('');
+
+  // Admin Authentication State
+  const [adminUser, setAdminUser] = useState<AdminUserSession | null>(getAdminUser());
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(Boolean(getAdminToken()));
+
+  // Verify Admin Session on mount
+  useEffect(() => {
+    if (getAdminToken()) {
+      verifyAdminSessionApi().then((valid) => {
+        setIsAdminAuthenticated(valid);
+        if (valid) {
+          setAdminUser(getAdminUser());
+        }
+      });
+    }
+  }, []);
+
+  // Sync products from backend on mount
+  useEffect(() => {
+    fetchProductsFromBackend()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setProducts(data);
+        }
+      })
+      .catch((err) => console.warn('Product backend sync notice:', err));
+  }, []);
 
   // Cart state initialized with 2 sample items (matching red badge "2" in screenshot)
   const [cart, setCart] = useState<CartItem[]>([
@@ -111,22 +154,77 @@ export function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Navigation helper
+  // Navigation helper with route protection for administrators
   const handleNavigate = (page: StoryboardPage) => {
+    if (page === 'admin' && !isAdminAuthenticated) {
+      setCurrentPage('admin-login');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    if (page === 'admin-login' && isAdminAuthenticated) {
+      setCurrentPage('admin');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Admin delete product
-  const handleDeleteProduct = (id: string) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
-    showToast('Product deleted from catalog');
+  // Admin login success handler
+  const handleAdminLoginSuccess = (user: AdminUserSession) => {
+    setIsAdminAuthenticated(true);
+    setAdminUser(user);
+    setCurrentPage('admin');
+    showToast(`Welcome back, ${user.name}!`);
   };
 
-  // Admin add product
-  const handleAddProduct = (newProduct: Product) => {
-    setProducts((prev) => [newProduct, ...prev]);
-    showToast(`Product "${newProduct.title}" added to catalog`);
+  // Admin logout handler
+  const handleAdminLogout = async () => {
+    await logoutAdminApi();
+    setIsAdminAuthenticated(false);
+    setAdminUser(null);
+    setCurrentPage('home');
+    showToast('Administrator logged out successfully.');
+  };
+
+  // Admin delete product from backend
+  const handleDeleteProduct = async (id: string) => {
+    try {
+      await deleteProductBackend(id);
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+      setCart((prev) => prev.filter((item) => item.product.id !== id));
+      showToast('Product removed from catalog.');
+    } catch (err) {
+      console.error('Error deleting product:', err);
+      showToast('Error removing product');
+    }
+  };
+
+  // Admin add product to backend
+  const handleAddProduct = async (productData: Partial<Product>) => {
+    try {
+      const created = await addProductBackend(productData);
+      setProducts((prev) => [created, ...prev.filter((p) => p.id !== created.id)]);
+      showToast(`Product "${created.title}" added to catalog!`);
+    } catch (err) {
+      console.error('Error adding product:', err);
+      showToast('Error adding product');
+    }
+  };
+
+  // Admin update product in backend (make all changes)
+  const handleUpdateProduct = async (updatedProduct: Product) => {
+    try {
+      const saved = await updateProductBackend(updatedProduct.id, updatedProduct);
+      setProducts((prev) => prev.map((p) => (p.id === saved.id ? saved : p)));
+      if (selectedProduct.id === saved.id) {
+        setSelectedProduct(saved);
+      }
+      showToast(`Updated "${saved.title}" successfully!`);
+    } catch (err) {
+      console.error('Error updating product:', err);
+      showToast('Error updating product');
+    }
   };
 
   // Save Review to Firestore Cloud Database
@@ -180,6 +278,7 @@ export function App() {
               setCurrentPage('products');
             }
           }}
+          isAdmin={isAdminAuthenticated}
         />
 
         {/* Floating Toast Notification */}
@@ -208,6 +307,7 @@ export function App() {
               onSelectProduct={handleSelectProduct}
               onNavigate={handleNavigate}
               onAddToCart={handleAddToCart}
+              onSelectCategory={setSelectedCategory}
             />
           )}
 
@@ -303,14 +403,33 @@ export function App() {
             />
           )}
 
-          {/* Store Admin Console Module */}
-          {currentPage === 'admin' && (
-            <AdminPanelView
-              products={products}
+          {/* Admin Login Module */}
+          {currentPage === 'admin-login' && (
+            <AdminLoginPage
+              onLoginSuccess={handleAdminLoginSuccess}
               onNavigate={handleNavigate}
-              onAddProduct={handleAddProduct}
-              onDeleteProduct={handleDeleteProduct}
             />
+          )}
+
+          {/* Store Admin Console Module (Strictly Protected by Backend Authentication) */}
+          {currentPage === 'admin' && (
+            isAdminAuthenticated ? (
+              <AdminPanelView
+                products={products}
+                onNavigate={handleNavigate}
+                onAddProduct={handleAddProduct}
+                onUpdateProduct={handleUpdateProduct}
+                onDeleteProduct={handleDeleteProduct}
+                onSelectProduct={handleSelectProduct}
+                onLogout={handleAdminLogout}
+                adminUser={adminUser}
+              />
+            ) : (
+              <AdminLoginPage
+                onLoginSuccess={handleAdminLoginSuccess}
+                onNavigate={handleNavigate}
+              />
+            )
           )}
         </main>
 

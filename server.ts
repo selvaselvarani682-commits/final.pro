@@ -1,9 +1,65 @@
 import express from 'express';
 import path from 'path';
+import crypto from 'crypto';
 import { createServer as createViteServer } from 'vite';
 import { EXPANDED_REVIEWS_CATALOG } from './src/data/expandedReviews';
 import { performLocalABSA } from './src/services/aiService';
 import { StoredReview } from './src/types';
+
+// ============================================================================
+// Secure Admin Authentication & Password Hashing Setup
+// ============================================================================
+interface AdminUser {
+  id: string;
+  username: string;
+  email: string;
+  name: string;
+  role: 'superadmin' | 'admin';
+  salt: string;
+  passwordHash: string;
+}
+
+function hashPassword(password: string, salt: string): string {
+  return crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
+}
+
+// Generate salts and hashes for default administrators
+const adminSalt1 = crypto.randomBytes(16).toString('hex');
+const adminSalt2 = crypto.randomBytes(16).toString('hex');
+
+const registeredAdmins: AdminUser[] = [
+  {
+    id: 'admin-001',
+    username: 'admin',
+    email: 'admin@smartreview.ai',
+    name: 'Primary Administrator',
+    role: 'superadmin',
+    salt: adminSalt1,
+    passwordHash: hashPassword('Admin@2026!', adminSalt1),
+  },
+  {
+    id: 'admin-002',
+    username: 'storeadmin',
+    email: 'manager@smartreview.ai',
+    name: 'Catalog Manager',
+    role: 'admin',
+    salt: adminSalt2,
+    passwordHash: hashPassword('admin123', adminSalt2),
+  },
+];
+
+interface AdminSession {
+  token: string;
+  adminId: string;
+  username: string;
+  email: string;
+  name: string;
+  role: string;
+  createdAt: number;
+  expiresAt: number;
+}
+
+const activeAdminSessions = new Map<string, AdminSession>();
 
 async function startServer() {
   const app = express();
@@ -15,6 +71,132 @@ async function startServer() {
 
   // In-memory server database initialized with catalog reviews
   let serverReviews: StoredReview[] = [...EXPANDED_REVIEWS_CATALOG];
+
+  // -------------------------------------------------------------
+  // REST API Endpoints: Admin Authentication
+  // -------------------------------------------------------------
+
+  // Admin Login endpoint
+  app.post('/api/admin/login', (req, res) => {
+    try {
+      const { identifier, password } = req.body;
+
+      if (!identifier || typeof identifier !== 'string' || !identifier.trim()) {
+        return res.status(400).json({ error: 'Username or Email is required.' });
+      }
+
+      if (!password || typeof password !== 'string' || !password.trim()) {
+        return res.status(400).json({ error: 'Password is required.' });
+      }
+
+      const cleanId = identifier.trim().toLowerCase();
+      const admin = registeredAdmins.find(
+        (a) => a.username.toLowerCase() === cleanId || a.email.toLowerCase() === cleanId
+      );
+
+      if (!admin) {
+        return res.status(401).json({ error: 'Invalid admin username/email or password.' });
+      }
+
+      // Hash input password with user's specific salt
+      const computedHash = hashPassword(password, admin.salt);
+      const isMatch = crypto.timingSafeEqual(
+        Buffer.from(computedHash, 'hex'),
+        Buffer.from(admin.passwordHash, 'hex')
+      );
+
+      if (!isMatch) {
+        return res.status(401).json({ error: 'Invalid admin username/email or password.' });
+      }
+
+      // Generate cryptographically random session token (32 bytes = 64 hex chars)
+      const token = crypto.randomBytes(32).toString('hex');
+      const now = Date.now();
+      const session: AdminSession = {
+        token,
+        adminId: admin.id,
+        username: admin.username,
+        email: admin.email,
+        name: admin.name,
+        role: admin.role,
+        createdAt: now,
+        expiresAt: now + 24 * 60 * 60 * 1000, // 24 hours
+      };
+
+      activeAdminSessions.set(token, session);
+
+      return res.json({
+        success: true,
+        message: 'Admin authentication successful',
+        token,
+        admin: {
+          id: admin.id,
+          username: admin.username,
+          email: admin.email,
+          name: admin.name,
+          role: admin.role,
+        },
+      });
+    } catch (err: any) {
+      console.error('Admin login error:', err);
+      return res.status(500).json({ error: 'Internal error processing admin authentication' });
+    }
+  });
+
+  // Verify Admin Session Token
+  app.get('/api/admin/verify', (req, res) => {
+    const authHeader = req.headers.authorization;
+    const customHeader = req.headers['x-admin-token'];
+    let token = '';
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7);
+    } else if (typeof customHeader === 'string') {
+      token = customHeader;
+    }
+
+    if (!token) {
+      return res.status(401).json({ valid: false, error: 'No authorization token provided' });
+    }
+
+    const session = activeAdminSessions.get(token);
+    if (!session) {
+      return res.status(401).json({ valid: false, error: 'Invalid session token' });
+    }
+
+    if (Date.now() > session.expiresAt) {
+      activeAdminSessions.delete(token);
+      return res.status(401).json({ valid: false, error: 'Admin session has expired' });
+    }
+
+    return res.json({
+      valid: true,
+      admin: {
+        id: session.adminId,
+        username: session.username,
+        email: session.email,
+        name: session.name,
+        role: session.role,
+      },
+    });
+  });
+
+  // Admin Logout endpoint
+  app.post('/api/admin/logout', (req, res) => {
+    const authHeader = req.headers.authorization;
+    const bodyToken = req.body?.token;
+    let token = bodyToken || '';
+
+    if (!token && authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7);
+    }
+
+    if (token) {
+      activeAdminSessions.delete(token);
+    }
+
+    return res.json({ success: true, message: 'Admin logged out successfully' });
+  });
 
   // -------------------------------------------------------------
   // REST API Endpoints
@@ -125,6 +307,164 @@ async function startServer() {
       return res.status(404).json({ error: 'Review not found' });
     }
     return res.json({ success: true, remainingCount: serverReviews.length });
+  });
+
+  // -------------------------------------------------------------
+  // Product Catalog CRUD Endpoints (Admin & Storefront)
+  // -------------------------------------------------------------
+  let serverProducts: any[] = [];
+
+  // GET all products
+  app.get('/api/products', (req, res) => {
+    const { category, brand, search } = req.query;
+    let filtered = [...serverProducts];
+
+    if (category && typeof category === 'string' && category !== 'All Categories') {
+      filtered = filtered.filter((p) => p.category?.toLowerCase() === category.toLowerCase());
+    }
+    if (brand && typeof brand === 'string') {
+      filtered = filtered.filter((p) => p.brand?.toLowerCase() === brand.toLowerCase());
+    }
+    if (search && typeof search === 'string') {
+      const q = search.toLowerCase();
+      filtered = filtered.filter(
+        (p) =>
+          p.title?.toLowerCase().includes(q) ||
+          p.brand?.toLowerCase().includes(q) ||
+          p.category?.toLowerCase().includes(q)
+      );
+    }
+    res.json(filtered);
+  });
+
+  // POST create a product (Admin)
+  app.post('/api/products', (req, res) => {
+    try {
+      const body = req.body;
+      if (!body.title || !body.title.trim()) {
+        return res.status(400).json({ error: 'Product title is required' });
+      }
+
+      const newProduct = {
+        id: body.id || 'prod-' + Math.random().toString(36).substring(2, 8) + '-' + Date.now().toString().slice(-4),
+        title: body.title.trim(),
+        brand: body.brand?.trim() || 'Generic Brand',
+        category: body.category?.trim() || 'Electronics',
+        price: Number(body.price) || 999,
+        originalPrice: Number(body.originalPrice) || Math.round((Number(body.price) || 999) * 1.25),
+        rating: Number(body.rating) || 4.5,
+        reviewCount: Number(body.reviewCount) || 120,
+        image: body.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=600&q=80',
+        thumbnails: body.thumbnails || [body.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=600&q=80'],
+        description: body.description?.trim() || 'Catalog item verified by administrator.',
+        specifications: body.specifications || [
+          { label: 'Condition', value: 'Brand New' },
+          { label: 'Warranty', value: '1 Year Manufacturer' },
+        ],
+        colors: body.colors || ['#1E293B', '#3B82F6'],
+        storageOptions: body.storageOptions || [],
+        platforms: body.platforms || {
+          Amazon: {
+            price: Number(body.price) || 999,
+            rating: Number(body.rating) || 4.5,
+            reviewCount: 120,
+            sentimentScore: 86,
+            positivePercent: 86,
+            negativePercent: 8,
+            deliverySpeed: '2 Days Prime',
+            authenticityRating: 98,
+          },
+          Meesho: {
+            price: Math.round((Number(body.price) || 999) * 0.94),
+            rating: 4.2,
+            reviewCount: 45,
+            sentimentScore: 78,
+            positivePercent: 78,
+            negativePercent: 14,
+            deliverySpeed: '4-5 Days',
+            authenticityRating: 90,
+          },
+        },
+        aiSummary: body.aiSummary || {
+          pros: ['Quality construction and dependable design', 'Verified customer sentiment'],
+          cons: ['Standard shipping packaging'],
+          sentimentBreakdown: { positive: 86, neutral: 8, negative: 6 },
+          verdict: 'Approved product in verified catalog.',
+          aspects: [
+            { aspect: 'Quality', sentiment: 'Positive', score: 90 },
+            { aspect: 'Value', sentiment: 'Positive', score: 88 },
+          ],
+        },
+      };
+
+      serverProducts = [newProduct, ...serverProducts];
+      return res.status(201).json(newProduct);
+    } catch (err: any) {
+      console.error('Server error creating product:', err);
+      return res.status(500).json({ error: 'Internal error creating product' });
+    }
+  });
+
+  // PUT update a product (Admin)
+  app.put('/api/products/:id', (req, res) => {
+    try {
+      const { id } = req.params;
+      const body = req.body;
+      const index = serverProducts.findIndex((p) => p.id === id);
+
+      if (index === -1) {
+        const newProduct = {
+          ...body,
+          id,
+        };
+        serverProducts.unshift(newProduct);
+        return res.json(newProduct);
+      }
+
+      const updated = {
+        ...serverProducts[index],
+        ...body,
+        id,
+        price: body.price !== undefined ? Number(body.price) : serverProducts[index].price,
+        originalPrice: body.originalPrice !== undefined ? Number(body.originalPrice) : serverProducts[index].originalPrice,
+      };
+
+      serverProducts[index] = updated;
+      return res.json(updated);
+    } catch (err: any) {
+      console.error('Server error updating product:', err);
+      return res.status(500).json({ error: 'Internal error updating product' });
+    }
+  });
+
+  // DELETE remove a product (Admin)
+  app.delete('/api/products/:id', (req, res) => {
+    const { id } = req.params;
+    const initialLen = serverProducts.length;
+    serverProducts = serverProducts.filter((p) => p.id !== id);
+
+    return res.json({
+      success: true,
+      deletedId: id,
+      initialCount: initialLen,
+      remainingCount: serverProducts.length,
+    });
+  });
+
+  // Bulk sync/seed endpoint for products
+  app.post('/api/products/sync', (req, res) => {
+    try {
+      const { products } = req.body;
+      if (Array.isArray(products) && products.length > 0) {
+        const existingIds = new Set(serverProducts.map((p) => p.id));
+        const toAdd = products.filter((p) => !existingIds.has(p.id));
+        serverProducts = [...serverProducts, ...toAdd];
+        return res.json({ success: true, count: serverProducts.length });
+      }
+      return res.json({ success: true, count: serverProducts.length });
+    } catch (err: any) {
+      return res.status(500).json({ error: 'Failed to sync products' });
+    }
   });
 
   // Server-side NLP Aspect Analysis

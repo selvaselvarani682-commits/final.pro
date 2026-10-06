@@ -36,6 +36,7 @@ interface HomePageViewProps {
   onSelectProduct: (product: Product) => void;
   onNavigate: (page: StoryboardPage) => void;
   onAddToCart: (product: Product) => void;
+  onSelectCategory?: (category: string) => void;
 }
 
 export const HomePageView: React.FC<HomePageViewProps> = ({
@@ -43,6 +44,7 @@ export const HomePageView: React.FC<HomePageViewProps> = ({
   onSelectProduct,
   onNavigate,
   onAddToCart,
+  onSelectCategory,
 }) => {
   const [heroSearch, setHeroSearch] = useState('');
 
@@ -314,7 +316,12 @@ export const HomePageView: React.FC<HomePageViewProps> = ({
             return (
               <button
                 key={cat.name}
-                onClick={() => onNavigate('products')}
+                onClick={() => {
+                  if (onSelectCategory) {
+                    onSelectCategory(cat.name);
+                  }
+                  onNavigate('products');
+                }}
                 className="flex flex-col items-center gap-2 group cursor-pointer"
               >
                 <div
