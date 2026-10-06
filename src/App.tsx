@@ -392,14 +392,13 @@ export function App() {
             />
           )}
 
-          {/* User Profile / Wishlist Module */}
+          {/* User Activity & Shopping Hub */}
           {currentPage === 'profile' && (
             <UserProfilePageView
               onNavigate={handleNavigate}
-              onLogout={() => {
-                showToast('Logged out');
-                setCurrentPage('home');
-              }}
+              onAddToCart={handleAddToCart}
+              onSelectProduct={handleSelectProduct}
+              products={products}
             />
           )}
 
