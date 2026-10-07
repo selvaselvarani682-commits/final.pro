@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Search,
   CheckCircle2,
@@ -48,8 +48,8 @@ export const HomePageView: React.FC<HomePageViewProps> = ({
 }) => {
   const [heroSearch, setHeroSearch] = useState('');
 
-  // 8 Circular Categories from the screenshot
-  const categoryPills = [
+  // All supported categories with styling
+  const allCategoryPills = [
     { name: 'Electronics', icon: Smartphone, bg: 'bg-blue-100', text: 'text-blue-600' },
     { name: 'Fashion', icon: Shirt, bg: 'bg-rose-100', text: 'text-rose-500' },
     { name: 'Home & Living', icon: Home, bg: 'bg-sky-100', text: 'text-sky-600' },
@@ -59,6 +59,12 @@ export const HomePageView: React.FC<HomePageViewProps> = ({
     { name: 'Toys', icon: Gamepad2, bg: 'bg-amber-100', text: 'text-amber-800' },
     { name: 'Groceries', icon: Apple, bg: 'bg-emerald-100', text: 'text-emerald-600' },
   ];
+
+  // Dynamically remove any category that has 0 products
+  const categoryPills = useMemo(() => {
+    const existingCategorySet = new Set(products.map((p) => p.category));
+    return allCategoryPills.filter((cat) => existingCategorySet.has(cat.name));
+  }, [products]);
 
   // 6 Featured Products matching the screenshot
   const featuredProductIds = [

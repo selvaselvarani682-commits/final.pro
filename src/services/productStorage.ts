@@ -9,7 +9,7 @@ import { db, testFirestoreConnection } from './firebase';
 import { Product } from '../types';
 import { STORYBOARD_PRODUCTS } from '../data/storyboardProducts';
 
-const STORAGE_KEY = 'reviewsense_products_catalog_v2';
+const STORAGE_KEY = 'reviewsense_products_catalog_v4';
 const PRODUCTS_COLLECTION = 'products';
 
 /**
@@ -23,7 +23,14 @@ export function getStoredProducts(): Product[] {
       return STORYBOARD_PRODUCTS;
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : STORYBOARD_PRODUCTS;
+    if (Array.isArray(parsed) && parsed.length >= STORYBOARD_PRODUCTS.length) {
+      return parsed;
+    }
+    // Upgrade existing cache with all new rich catalog items
+    const existingIds = new Set((parsed || []).map((p: any) => p.id));
+    const merged = [...(Array.isArray(parsed) ? parsed : []), ...STORYBOARD_PRODUCTS.filter((p) => !existingIds.has(p.id))];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+    return merged;
   } catch (err) {
     console.error('Error reading products from localStorage:', err);
     return STORYBOARD_PRODUCTS;

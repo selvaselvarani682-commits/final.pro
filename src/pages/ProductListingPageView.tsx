@@ -31,17 +31,41 @@ export const ProductListingPageView: React.FC<ProductListingPageViewProps> = ({
   const [priceTier, setPriceTier] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('popularity');
 
-  const categories = [
-    'All Categories',
-    'Electronics',
-    'Fashion',
-    'Beauty',
-    'Home & Living',
-    'Sports',
-    'Books',
-    'Toys',
-    'Groceries',
-  ];
+  // Dynamically compute categories that have at least 1 product
+  const categoriesWithCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    products.forEach((p) => {
+      if (p.category) {
+        counts[p.category] = (counts[p.category] || 0) + 1;
+      }
+    });
+
+    const preferredOrder = [
+      'Electronics',
+      'Fashion',
+      'Beauty',
+      'Home & Living',
+      'Sports',
+      'Books',
+      'Toys',
+      'Groceries',
+    ];
+
+    const activeList = preferredOrder.filter((cat) => (counts[cat] || 0) > 0);
+    // Include any new categories added by admin that have products
+    Object.keys(counts).forEach((cat) => {
+      if (!activeList.includes(cat) && counts[cat] > 0) {
+        activeList.push(cat);
+      }
+    });
+
+    return {
+      list: ['All Categories', ...activeList],
+      counts,
+    };
+  }, [products]);
+
+  const categories = categoriesWithCounts.list;
 
   const priceRanges = [
     { id: 'all', label: 'All Prices' },
@@ -132,17 +156,24 @@ export const ProductListingPageView: React.FC<ProductListingPageViewProps> = ({
                 return (
                   <label
                     key={cat}
-                    className="flex items-center gap-2.5 text-slate-700 hover:text-indigo-600 cursor-pointer select-none py-0.5"
+                    className="flex items-center justify-between gap-2 text-slate-700 hover:text-indigo-600 cursor-pointer select-none py-0.5 group"
                   >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => onSelectCategory(cat)}
-                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
-                    />
-                    <span className={checked ? 'font-bold text-indigo-600' : ''}>
-                      {cat}
-                    </span>
+                    <div className="flex items-center gap-2.5">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => onSelectCategory(cat)}
+                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer"
+                      />
+                      <span className={checked ? 'font-bold text-indigo-600' : ''}>
+                        {cat}
+                      </span>
+                    </div>
+                    {cat !== 'All Categories' && (
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-slate-100 group-hover:bg-indigo-50 text-slate-500 group-hover:text-indigo-600 transition-colors">
+                        {categoriesWithCounts.counts[cat] || 0}
+                      </span>
+                    )}
                   </label>
                 );
               })}

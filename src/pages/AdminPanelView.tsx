@@ -111,6 +111,11 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
   };
 
   // Filtered Products
+  const activeCategoryOptions = useMemo(() => {
+    const presentCats = new Set(products.map((p) => p.category));
+    return CATEGORY_OPTIONS.filter((c) => presentCats.has(c));
+  }, [products]);
+
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
       if (selectedCategory !== 'All' && p.category !== selectedCategory) {
@@ -510,7 +515,7 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
                       className="px-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 text-slate-800 font-semibold focus:outline-none focus:border-indigo-600"
                     >
                       <option value="All">All Categories</option>
-                      {CATEGORY_OPTIONS.map((c) => (
+                      {activeCategoryOptions.map((c) => (
                         <option key={c} value={c}>
                           {c}
                         </option>

@@ -1,10 +1,13 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import crypto from 'crypto';
 import { createServer as createViteServer } from 'vite';
 import { EXPANDED_REVIEWS_CATALOG } from './src/data/expandedReviews';
 import { performLocalABSA } from './src/services/aiService';
 import { StoredReview } from './src/types';
+
+const currentDir = typeof __dirname !== 'undefined' ? __dirname : process.cwd();
 
 // ============================================================================
 // Secure Admin Authentication & Password Hashing Setup
@@ -63,7 +66,7 @@ const activeAdminSessions = new Map<string, AdminSession>();
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   // Middleware for parsing JSON bodies with large limits for image and audio payloads
   app.use(express.json({ limit: '25mb' }));
@@ -531,19 +534,28 @@ async function startServer() {
   // -------------------------------------------------------------
   // Vite Integration (Development Middleware / Production Static)
   // -------------------------------------------------------------
-  if (process.env.NODE_ENV !== 'production') {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const distPath = fs.existsSync(path.join(process.cwd(), 'dist'))
+    ? path.join(process.cwd(), 'dist')
+    : currentDir;
+  const indexHtmlPath = path.join(distPath, 'index.html');
+
+  if (isProduction && fs.existsSync(indexHtmlPath)) {
+    // Serve production static assets
+    app.use(express.static(distPath));
+    // Catch-all route to serve index.html for client-side routing
+    app.use((req, res, next) => {
+      if (req.method === 'GET' && !req.path.startsWith('/api')) {
+        return res.sendFile(indexHtmlPath);
+      }
+      next();
+    });
+  } else {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
     });
     app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    // Express v5 wildcard route
-    app.get('*all', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
   }
 
   app.listen(PORT, '0.0.0.0', () => {
